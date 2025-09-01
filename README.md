@@ -27,34 +27,36 @@
 <img alt="EverShop" width="950" src="https://raw.githubusercontent.com/evershopcommerce/evershop/dev/.github/images/banner.png"/>
 </p>
 
-## Introduction
+## Introdução
 
-EverShop is a modern, TypeScript-first eCommerce platform built with GraphQL and React. Designed for developers, it offers essential commerce features in a modular, fully customizable architecture—perfect for building tailored shopping experiences with confidence and speed.
+EverShop é uma plataforma de e-commerce moderna, construída com uma abordagem TypeScript-first, utilizando GraphQL e React. Projetada para desenvolvedores, ela oferece recursos essenciais de comércio em uma arquitetura modular e totalmente personalizável — perfeita para construir experiências de compra sob medida com confiança e rapidez.
 
-## Installation Using Docker
+## Instalação Usando Docker
 
 
-You can get started with EverShop in minutes by using the Docker image. The Docker image is a great way to get started with EverShop without having to worry about installing dependencies or configuring your environment.
+Você pode começar a usar o EverShop em minutos com a imagem do Docker. A imagem do Docker é uma ótima maneira de começar sem ter que se preocupar em instalar dependências ou configurar seu ambiente.
+
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/evershopcommerce/evershop/main/docker-compose.yml > docker-compose.yml
 docker-compose up -d
 ```
 
-For the full installation guide, please refer to our [Installation guide](https://evershop.io/docs/development/getting-started/installation-guide).
+Para o guia de instalação completo, consulte o [Guia de instalação](https://evershop.io/docs/development/getting-started/installation-guide).
 
-## Documentation
+## Documentação
 
-- [Installation guide](https://evershop.io/docs/development/getting-started/installation-guide).
+- [Guia de instalação](https://evershop.io/docs/development/getting-started/installation-guide).
 
-- [Extension development](https://evershop.io/docs/development/module/create-your-first-extension).
+- [Desenvolvimento de extensões](https://evershop.io/docs/development/module/create-your-first-extension).
 
-- [Theme development](https://evershop.io/docs/development/theme/theme-overview).
+- [Desenvolvimento de temas](https://evershop.io/docs/development/theme/theme-overview).
 
 
-## Demo
+## Demonstração
 
-Explore our demo store.
+Explore a loja de demonstração.
+
 
 <p align="left">
   <a href="https://demo.evershop.io/admin" target="_blank">
@@ -64,45 +66,37 @@ Explore our demo store.
     <img alt="evershop-store-demo" height="35" alt="EverShop Store Demo" src="https://raw.githubusercontent.com/evershopcommerce/evershop/dev/.github/images/evershop-demo-front.png"/>
   </a>
 </p>
-<b>Demo user:</b>
+<b>Usuário de demonstração:</b>
 
 Email: demo@evershop.io<br/>
 Password: 123456
 
-## Support
+## Contribuição
 
-If you like my work, feel free to:
+O EverShop é um projeto de código aberto. Temos o compromisso de ter um processo de desenvolvimento totalmente transparente e valorizamos muito todas as contribuições. Se você nos ajudar a corrigir bugs, propor novos recursos, melhorar a documentação ou divulgar o projeto, adoraríamos ter você como parte da comunidade EverShop.
 
-- ⭐ this repository. It helps.
-- [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)][tweet] about EverShop. Thank you!
 
-[tweet]: https://twitter.com/intent/tweet?url=https%3A%2F%2Fgithub.com%2Fevershopcommerce%2Fevershop&text=Awesome%20React%20Ecommerce%20Project&hashtags=react,ecommerce,expressjs,graphql
+### Faça uma pergunta sobre o EverShop
 
-## Contributing
-
-EverShop is an open-source project. We are committed to a fully transparent development process and appreciate highly any contributions. Whether you are helping us fix bugs, proposing new features, improving our documentation or spreading the word - we would love to have you as part of the EverShop community.
-
-### Ask a question about EverShop
-
-You can ask questions, and participate in discussions about EverShop-related topics in the EverShop Discord channel.
+Você pode fazer perguntas e participar de discussões sobre tópicos relacionados ao EverShop no canal do Discord do EverShop.
 
 <a href="https://discord.gg/GSzt7dt7RM"><img src="https://raw.githubusercontent.com/evershopcommerce/evershop/dev/.github/images/discord_banner_github.svg" /></a>
 
-### Create a bug report
+### Criar um relatório de bug
 
-If you see an error message or run into an issue, please [create bug report](https://github.com/evershopcommerce/evershop/issues/new). This effort is valued and it will help all EverShop users.
-
-
-### Submit a feature request
-
-If you have an idea, or you're missing a capability that would make development easier and more robust, please [Submit feature request](https://github.com/evershopcommerce/evershop/issues/new).
-
-If a similar feature request already exists, don't forget to leave a "+1".
-If you add some more information such as your thoughts and vision about the feature, your comments will be embraced warmly :)
+Se você encontrar uma mensagem de erro ou tiver algum problema, crie um [relatório de bug](https://github.com/evershopcommerce/evershop/issues/new). Esse esforço é valorizado e ajudará todos os usuários do EverShop.
 
 
-Please refer to our [Contribution Guidelines](./CONTRIBUTING.md) and [Code of Conduct](./CODE_OF_CONDUCT.md).
+### Envie uma solicitação de recurso
 
-## License
+Se você tem uma ideia ou sente falta de alguma funcionalidade que tornaria o desenvolvimento mais fácil e robusto, envie uma [solicitação de recurso](https://github.com/evershopcommerce/evershop/issues/new). 
+
+
+Se uma solicitação de recurso semelhante já existir, não se esqueça de deixar um "+1". 
+Se você adicionar mais informações, como suas ideias e visão sobre o recurso, seus comentários serão muito bem-vindos. :)
+
+Consulte nossas [Diretrizes de Contribuição](./CONTRIBUTING.md) e o [Código de Conduta](./CODE_OF_CONDUCT.md).
+
+## Licença
 
 [GPL-3.0 License](https://github.com/evershopcommerce/evershop/blob/main/LICENSE)
