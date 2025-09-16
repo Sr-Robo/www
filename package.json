@@ -47,5 +47,8 @@
     "ts-jest": "^29.3.2",
     "typescript": "^5.8.3",
     "webpack-bundle-analyzer": "^4.5.0"
+  },
+  "dependencies": {
+    "@evershop/productcomment": "^1.0.2"
   }
 }

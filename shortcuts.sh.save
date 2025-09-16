@@ -1,0 +1,152 @@
+#!/bin/bash
+
+# script de funções e atalhos para o servidor/terminal
+cd "$(dirname "$0")"
+
+# iniciar servidor temporario
+function ligar_temp() {
+  echo "Iniciando servidor temporariamente..."
+  npm run start
+  echo ""
+  echo "Check."
+}
+
+# iniciar servidor de dev
+function ligar_dev() {
+  echo "Iniciando servidor de desenvolvimento.."
+  npm run dev
+  echo ""
+  echo "Check."
+}
+
+# iniciar servidor de teste
+function ligar_test() {
+  echo "Iniciando servidor de testes.."
+  npm run test
+}
+
+# compilar tema
+function compilar() {
+  echo "Compilando o tema 13372077.."
+  npm run compile
+  echo ""
+  echo "Check."
+}
+
+# iniciar servidor de produção
+function ligar() {
+  echo "Iniciando servidor em modo de produção.."
+  pm2 start npm --name "fsociety" -- run start
+  echo ""
+  echo "Check."
+}
+
+# inicia verificação do servidor
+function lint() {
+  echo "Iniciando verificação do servidor.."
+  npm run lint
+  echo ""
+  echo "Check."
+}
+
+# limpar cache
+function cache() {
+  echo "Limpando cache.."
+  rm -rf dist/*
+  echo ""
+  echo "Check."
+}
+
+# parar o servidor
+function parar_servidor() {
+  echo "Parando o servidor.."
+  pm2 stop fsociety
+  echo ""
+  echo "Check."
+}
+
+
+# buildar
+function build() {
+  echo "Buildando servidor.."
+  local total_minutes=100
+  local total_seconds=$((total_minutes * 60))
+
+  # Inicia o build em segundo plano
+  npm run build &
+  local pid=$!
+
+  # Contador regressivo
+  while [ $total_seconds -gt 0 ]; do
+    # Verifica se o processo ainda está rodando
+    if ! ps -p $pid > /dev/null; then
+      echo -e "\nBuild concluída antes do tempo estimado!"
+      break
+    fi
+
+    # Calcula minutos e segundos restantes
+    local mins=$((total_seconds / 60))
+    local secs=$((total_seconds % 60))
+
+    # Atualiza a mesma linha do terminal
+    echo -ne "Tempo restante: ${mins}min ${secs}s\033[0K\r"
+
+    sleep 1
+    total_seconds=$((total_seconds - 1))
+  done
+a
+  # Se o processo ainda estiver rodando após o tempo estimado
+  if ps -p $pid > /dev/null; then
+    echo -e "\nAguardando conclusão..."
+    wait $pid
+  fi
+
+  echo -e "\nCheck."
+}
+
+# dicionário
+function ajuda() {
+  echo "Comandos disponíveis:"
+  echo "  tempmode           - Inicia o servidor em modo temporário."
+  echo "  devmode            - Inicia o servidor em modo de desenvolvimento."
+  echo "  compilar           - Compila os arquivos do tema."
+  echo "  cache              - Limpa a memória cachê."
+  echo "  init               - Inicia o servidor em modo de produção."
+  echo "  build              - Builda o servidor."
+  echo "  lint               - Roda uma verificação completa no servidor."
+  echo ""
+}
+
+# --- Lógica de Execução ---
+
+case "$1" in
+  "tempmode")
+    ligar_temp
+    ;;
+  "devmode")
+    ligar_dev
+    ;;
+  "compilar")
+    compilar
+    ;;
+  "cache")
+    cache
+    ;;
+  "init")
+    ligar
+    ;;
+  "build")
+    build
+    ;;
+  "lint")
+    lint
+    ;;
+  "ajuda" | "--help")
+    ajuda
+    ;;
+  *)
+    echo "??????????"
+    ajuda
+    exit 1
+    ;;
+esac
