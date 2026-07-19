@@ -1,0 +1,66 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: dev
+
+      - name: Configurar git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Adicionar remote upstream
+        run: git remote add upstream https://github.com/evershopcommerce/evershop.git
+
+      - name: Buscar upstream
+        run: git fetch upstream
+
+      - name: Tentar merge numa branch de sync
+        id: sync
+        run: |
+          BRANCH="upstream-sync-$(date -u +%Y-%m-%d)"
+          git checkout -b "$BRANCH"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          if git merge upstream/main --no-edit; then
+            echo "conflict=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "conflict=true" >> "$GITHUB_OUTPUT"
+            # Comita o estado com marcadores de conflito para revisão manual no PR.
+            git add -A
+            git commit -m "sync upstream/main (conflitos pendentes de resolução manual)" --no-verify
+          fi
+
+      - name: Push da branch de sync
+        run: git push origin "${{ steps.sync.outputs.branch }}" --force
+
+      - name: Abrir PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ steps.sync.outputs.branch }}
+          base: dev
+          title: "Sync com upstream evershopcommerce/evershop"
+          body: |
+            PR automático de sincronização diária com o repositório oficial
+            (`evershopcommerce/evershop`, branch `main`).
+
+            Conflitos detectados: **${{ steps.sync.outputs.conflict }}**
+
+            Se houver conflitos, os marcadores (`<<<<<<<`) estão commitados nesta
+            branch — resolva localmente antes de aprovar o merge. Nunca é feito
+            merge automático direto em `dev`.
+          labels: upstream-sync
