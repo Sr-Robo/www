@@ -10,6 +10,8 @@ COPY media ./media
 COPY config ./config
 COPY translations ./translations
 RUN npm install
+RUN npm run compile -w @evershop/postgres-query-builder
+RUN npm run compile
 RUN npm run build
 
 EXPOSE 80
