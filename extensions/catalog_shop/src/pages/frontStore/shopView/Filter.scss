@@ -4,14 +4,16 @@
 // filter-option-list, rangeslider...) que aqui recebem a skin cyberpunk via
 // tokens `--cpk-*` (já globais, carregados pelo tema em toda página).
 
-.cpk-shop-filter-tool {
-  padding: 1.5rem;
-  background-color: var(--cpk-color-bg-100);
-  border: 1px solid var(--cpk-color-border);
+// Sem "caixa": só as linhas de cada seção, separadas por um traço fino —
+// cada filho direto (título + price-filter/category-filter/attribute-filter)
+// ganha a divisória, exceto o último.
+.cpk-shop-filter-tool > div:not(:last-child) {
+  border-bottom: 1px solid var(--cpk-color-border);
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
 .cpk-shop-filter-heading {
-  margin-bottom: 1.25rem;
   font-family: var(--cpk-font-family);
   font-weight: var(--cpk-font-weight-heading);
   font-size: 0.875em;
