@@ -1,0 +1,14 @@
+"""
+Filtros disponíveis para a listagem de todos os produtos (página /shop),
+sem escopo de categoria — equivalente aos campos availableAttributes/
+priceRange que o tipo Category já expõe, mas calculado sobre o catálogo
+inteiro.
+"""
+type ShopFilters {
+  availableAttributes: [FilterAttribute]
+  priceRange: PriceRange
+}
+
+extend type Query {
+  shopFilters: ShopFilters
+}

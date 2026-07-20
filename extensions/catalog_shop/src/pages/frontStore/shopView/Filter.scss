@@ -1,0 +1,155 @@
+// Sidebar de filtros da página /shop. Os widgets PriceFilter/CategoryFilter/
+// AttributeFilter são reaproveitados direto do core do EverShop (não
+// copiados) — trazem classNames genéricos (filter-item-title,
+// filter-option-list, rangeslider...) que aqui recebem a skin cyberpunk via
+// tokens `--cpk-*` (já globais, carregados pelo tema em toda página).
+
+.cpk-shop-filter-tool {
+  padding: 1.5rem;
+  background-color: var(--cpk-color-bg-100);
+  border: 1px solid var(--cpk-color-border);
+}
+
+.cpk-shop-filter-heading {
+  margin-bottom: 1.25rem;
+  font-family: var(--cpk-font-family);
+  font-weight: var(--cpk-font-weight-heading);
+  font-size: 0.875em;
+  letter-spacing: 0.06em;
+  color: var(--cpk-color-brand);
+}
+
+.filter-item-title {
+  margin-bottom: 0.625rem;
+  padding-bottom: 0.313rem;
+  border-bottom: 1px solid var(--cpk-color-border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8125em;
+  color: var(--cpk-color-contrast-muted);
+}
+
+.price-filter .filter-item-title {
+  border-bottom: 0;
+}
+
+.filter-option-list {
+  .filter-option {
+    padding: 0 0.5rem;
+    color: var(--cpk-color-contrast);
+  }
+
+  a:hover .filter-option {
+    color: var(--cpk-color-brand);
+  }
+
+  svg path {
+    fill: var(--cpk-color-contrast-muted);
+  }
+
+  a:hover svg path {
+    fill: var(--cpk-color-brand);
+  }
+}
+
+// Range de preço (dupla alça) — o EverShop empilha dois <input type=range>
+// via position:absolute; sem isso as duas trilhas ficam uma embaixo da
+// outra em vez de sobrepostas.
+.rangeslider {
+  position: relative;
+  height: 60px;
+  width: 100%;
+  display: inline-block;
+
+  input {
+    position: absolute;
+  }
+
+  span {
+    position: absolute;
+    margin-top: 30px;
+    left: 0;
+  }
+}
+
+input[type='range'] {
+  width: 100%;
+  height: 30px;
+  overflow: hidden;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 200px;
+  height: 1px;
+  background: var(--cpk-color-border);
+}
+
+input[type='range']:nth-child(2)::-webkit-slider-runnable-track {
+  background: none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  height: 14px;
+  width: 14px;
+  margin-top: -7px;
+  background: var(--cpk-color-brand);
+  border: none;
+  border-radius: 0;
+  z-index: 1;
+  box-shadow: var(--cpk-glow-sm);
+}
+
+input[type='range']:nth-child(1)::-webkit-slider-thumb {
+  z-index: 2;
+}
+
+.cpk-shop-filter-opener,
+.cpk-shop-filter-closer {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 44px;
+  height: 44px;
+  z-index: 998;
+  background: var(--cpk-color-brand);
+  color: var(--cpk-color-bg);
+  justify-content: center;
+  align-items: center;
+  box-shadow: var(--cpk-glow-md);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .cpk-shop-filter-tool.opening {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    background-color: var(--cpk-color-bg);
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: auto;
+  }
+
+  .cpk-shop-filter-opener,
+  .cpk-shop-filter-closer {
+    display: flex;
+  }
+}
