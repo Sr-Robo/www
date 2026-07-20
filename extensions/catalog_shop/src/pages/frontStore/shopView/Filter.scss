@@ -1,8 +1,7 @@
-// Sidebar de filtros da página /shop. Os widgets PriceFilter/CategoryFilter/
-// AttributeFilter são reaproveitados direto do core do EverShop (não
-// copiados) — trazem classNames genéricos (filter-item-title,
-// filter-option-list, rangeslider...) que aqui recebem a skin cyberpunk via
-// tokens `--cpk-*` (já globais, carregados pelo tema em toda página).
+// Sidebar de filtros da página /shop. PriceFilter/CategoryFilter/
+// AttributeFilter são versões próprias (ver ./filter/), não reaproveitam
+// mais os componentes do core — precisavam de título customizado, contador
+// de produtos e botão de filtrar manual (paridade com a referência real).
 
 // Sem "caixa": só as linhas de cada seção, separadas por um traço fino —
 // cada filho direto (título + price-filter/category-filter/attribute-filter)
@@ -36,21 +35,55 @@
 }
 
 .filter-option-list {
-  .filter-option {
-    padding: 0 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    margin-top: 0.5rem;
+  }
+
+  li.is-active .filter-option {
+    color: var(--cpk-color-brand);
+  }
+
+  li.is-active .filter-option::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 0.5rem;
+    background-color: var(--cpk-color-brand);
+    box-shadow: var(--cpk-glow-sm);
+  }
+
+  a {
+    display: flex;
+    align-items: center;
     color: var(--cpk-color-contrast);
+    text-decoration: none;
   }
 
   a:hover .filter-option {
     color: var(--cpk-color-brand);
   }
 
-  svg path {
-    fill: var(--cpk-color-contrast-muted);
+  .filter-option-count {
+    margin-left: 0.375rem;
+    color: var(--cpk-color-contrast-muted);
+    font-size: 0.8125em;
   }
+}
 
-  a:hover svg path {
-    fill: var(--cpk-color-brand);
+// Botão "Filtrar" do PriceFilter e valores atuais (X — Y)
+.price-filter-amount {
+  margin: 0.75rem 0;
+  color: var(--cpk-color-contrast-muted);
+  font-size: 0.8125em;
+
+  span {
+    color: var(--cpk-color-contrast);
+    font-weight: var(--cpk-font-weight-heading);
   }
 }
 

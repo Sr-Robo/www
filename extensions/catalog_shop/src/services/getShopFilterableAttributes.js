@@ -53,7 +53,8 @@ export const getShopFilterableAttributes = async () => {
         options: [
           {
             optionId: row.option_id,
-            optionText: row.option_text
+            optionText: row.option_text,
+            productCount: 1
           }
         ]
       });
@@ -64,8 +65,13 @@ export const getShopFilterableAttributes = async () => {
       if (idx === -1) {
         attributes[index].options.push({
           optionId: row.option_id,
-          optionText: row.option_text
+          optionText: row.option_text,
+          productCount: 1
         });
+      } else {
+        // Cada linha é uma ocorrência (produto, opção) — já que allIds não
+        // tem duplicatas, cada linha extra pra mesma opção é outro produto.
+        attributes[index].options[idx].productCount += 1;
       }
     }
   }

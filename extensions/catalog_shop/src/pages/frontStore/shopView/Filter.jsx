@@ -2,9 +2,9 @@ import PropTypes from 'prop-types';
 import React, { useMemo, useState } from 'react';
 import Area from '@components/common/Area';
 import { useAppDispatch } from '@components/common/context/app';
-import { AttributeFilter } from '@components/frontStore/catalog/categoryView/filter/AttributeFilter';
-import { CategoryFilter } from '@components/frontStore/catalog/categoryView/filter/CategoryFilter';
-import { PriceFilter } from '@components/frontStore/catalog/categoryView/filter/PriceFilter';
+import { AttributeFilter } from './filter/AttributeFilter';
+import { CategoryFilter } from './filter/CategoryFilter';
+import { PriceFilter } from './filter/PriceFilter';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import './Filter.scss';
 
@@ -93,11 +93,6 @@ export default function Filter({
           currentFilters={currentFilters}
           coreComponents={[
             {
-              component: { default: PriceFilter },
-              props: { priceRange, currentFilters, updateFilter, setting },
-              sortOrder: 10
-            },
-            {
               component: { default: CategoryFilter },
               props: {
                 currentFilters,
@@ -105,6 +100,11 @@ export default function Filter({
                 setting,
                 categories
               },
+              sortOrder: 10
+            },
+            {
+              component: { default: PriceFilter },
+              props: { priceRange, currentFilters, updateFilter, setting },
               sortOrder: 15
             },
             {
@@ -183,7 +183,8 @@ Filter.propTypes = {
         options: PropTypes.arrayOf(
           PropTypes.shape({
             optionId: PropTypes.number,
-            optionText: PropTypes.string
+            optionText: PropTypes.string,
+            productCount: PropTypes.number
           })
         )
       })
@@ -198,7 +199,8 @@ Filter.propTypes = {
       PropTypes.shape({
         categoryId: PropTypes.number,
         name: PropTypes.string,
-        uuid: PropTypes.string
+        uuid: PropTypes.string,
+        productCount: PropTypes.number
       })
     )
   }).isRequired,
@@ -229,6 +231,7 @@ query Query($filters: [FilterInput]) {
       options {
         optionId
         optionText
+        productCount
       }
     }
     priceRange {
@@ -241,6 +244,7 @@ query Query($filters: [FilterInput]) {
       categoryId
       name
       uuid
+      productCount
     }
   }
   setting {

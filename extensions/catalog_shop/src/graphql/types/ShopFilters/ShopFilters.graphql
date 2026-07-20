@@ -9,6 +9,18 @@ type ShopFilters {
   priceRange: PriceRange
 }
 
+# Contagem de produtos por opção de filtro — quantos produtos do catálogo
+# inteiro (sem escopo de categoria) têm aquela opção/categoria. Usado na
+# sidebar da página /shop pra mostrar "(N)" ao lado de cada opção, igual à
+# referência CyberPulse.
+extend type FilterOption {
+  productCount: Int
+}
+
+extend type Category {
+  productCount: Int
+}
+
 extend type Query {
   shopFilters: ShopFilters
 }
