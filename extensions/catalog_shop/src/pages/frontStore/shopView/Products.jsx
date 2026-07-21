@@ -2,6 +2,7 @@ import ProductList from '@components/frontStore/catalog/product/list/List';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
+import './Products.scss';
 
 export default function Products({
   products: { items }

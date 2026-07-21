@@ -86,7 +86,12 @@ export function PriceFilter({
         <div className="price-filter-amount">
           {_('Price')}: <span>{f}</span> — <span>{t}</span>
         </div>
-        <button type="submit" className="cpk-btn cpk-btn--outline cpk-glitch" data-text={_('Filter')}>
+        <button
+          type="submit"
+          className="cpk-btn cpk-btn--outline cpk-glitch cpk-glitch-btn"
+          data-text={_('Filter')}
+        >
+          <span className="cpk-btn-bg" aria-hidden="true" />
           {_('Filter')}
         </button>
       </form>

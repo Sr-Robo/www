@@ -1,0 +1,20 @@
+// Corte de canto na foto do produto — mesma técnica de clip-path já usada no
+// resto do tema, mirando a classe do core (.product-thumbnail-listing)
+// direto via CSS, sem precisar fork do componente React.
+//
+// Só bottom-right aqui (thumbnails da listagem do /shop): o corte
+// top-left+bottom-right (diagonal, os dois cantos) é pra imagens de
+// conteúdo maiores (hero, banners) — o fxlip pediu que as thumbs da
+// listagem levem só o corte de um canto (bottom-right), mais discreto.
+.product-thumbnail-listing {
+  --cpk-crop-br: 20px;
+  // Fundo #f6f6f6 (quase branco) do core trocado pela cor de marca do tema.
+  background-color: var(--cpk-color-brand);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cpk-crop-br)),
+    calc(100% - var(--cpk-crop-br)) 100%,
+    0 100%
+  );
+}
