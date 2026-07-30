@@ -1,4 +1,4 @@
-import ProductList from '@components/frontStore/catalog/product/list/List';
+import ProductList from '@components/frontStore/catalog/ProductList.js';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
