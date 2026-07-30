@@ -1,4 +1,4 @@
-import { Pagination } from '@components/frontStore/catalog/product/list/Pagination';
+import { Pagination } from '@components/frontStore/Pagination.js';
 import PropTypes from 'prop-types';
 import React from 'react';
 
