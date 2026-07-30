@@ -1,5 +1,6 @@
 FROM node:20-alpine
 WORKDIR /app
+ENV CYPRESS_INSTALL_BINARY=0
 RUN npm install -g npm@9
 COPY package*.json .
 COPY packages ./packages
@@ -8,6 +9,7 @@ COPY extensions ./extensions
 COPY config ./config
 COPY translations ./translations
 RUN mkdir -p public media
+ENV CYPRESS_INSTALL_BINARY=0
 RUN npm install
 RUN npm run compile -w @evershop/postgres-query-builder
 RUN npm run compile -w admin_ptbr
