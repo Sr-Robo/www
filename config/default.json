@@ -1,0 +1,29 @@
+{
+  "shop": {
+    "name": "Sr. Robo",
+    "language": "pt",
+    "currency": "BRL",
+    "homeUrl": "https://sr.robo.net.br"
+  },
+  "system": {
+    "theme": "cyberpunk",
+    "session": {
+      "maxAge": 604800000,
+      "cookieSecret": "e63744c8de6f49be0546f91cc3c9bbc842e280ed62ecec121d62d970e540b4b3"
+    },
+    "extensions": [
+      {
+        "name": "admin_ptbr",
+        "resolve": "extensions/admin_ptbr",
+        "enabled": true,
+        "priority": 100
+      },
+      {
+        "name": "catalog_shop",
+        "resolve": "extensions/catalog_shop",
+        "enabled": true,
+        "priority": 100
+      }
+    ]
+  }
+}
