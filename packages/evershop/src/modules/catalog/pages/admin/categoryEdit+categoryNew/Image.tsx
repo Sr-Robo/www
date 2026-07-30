@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Image.scss';
-import { Card } from '@components/admin/Card.js';
 import { Image, ImageUploader } from '@components/admin/ImageUploader.js';
+import { InputField } from '@components/common/form/InputField.js';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@components/common/ui/Card.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
+import { useFormContext } from 'react-hook-form';
 
 interface ImageProps {
   category?: {
@@ -11,22 +20,25 @@ interface ImageProps {
 
 export default function Image({ category }: ImageProps) {
   const [image, setImage] = useState(category?.image);
+  const { setValue } = useFormContext();
+
+  useEffect(() => {
+    if (image) {
+      setValue('image', image.url);
+    } else {
+      setValue('image', '');
+    }
+  }, [image, setValue]);
+
   return (
-    <Card
-      title="Category banner"
-      actions={
-        image
-          ? [
-              {
-                name: 'Remove',
-                variant: 'critical',
-                onAction: () => setImage(undefined)
-              }
-            ]
-          : []
-      }
-    >
-      <Card.Session>
+    <Card>
+      <CardHeader>
+        <CardTitle>{_('Category Image')}</CardTitle>
+        <CardDescription>
+          {_('Upload an image for the category.')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <ImageUploader
           onUpload={(images) => {
             if (images.length > 0) {
@@ -34,15 +46,17 @@ export default function Image({ category }: ImageProps) {
             }
           }}
           isMultiple={false}
-          allowDelete={false}
+          allowDelete={true}
+          onDelete={() => {
+            setImage(undefined);
+          }}
           currentImages={image ? [image] : []}
           targetPath={`catalog/${
             Math.floor(Math.random() * (9999 - 1000)) + 1000
           }/${Math.floor(Math.random() * (9999 - 1000)) + 1000}`}
         />
-        {image && <input type="hidden" value={image.url} name="image" />}
-        {!image && <input type="hidden" value="" name="image" />}
-      </Card.Session>
+        <InputField type="hidden" value={image?.url} name="image" />
+      </CardContent>
     </Card>
   );
 }

@@ -100,3 +100,19 @@ Consulte nossas [Diretrizes de Contribuição](./CONTRIBUTING.md) e o [Código d
 ## Licença
 
 [GPL-3.0 License](https://github.com/evershopcommerce/evershop/blob/main/LICENSE)
+
+## The Future of EverShop
+
+EverShop is seeing rapid organic growth and strong adoption from the developer community. We are now scaling our operations and building **EverShop Cloud**.
+
+If you are a strategic investor interested in the future of Node.js commerce and our mission to set a new standard for modern eCommerce, we’d love to share our vision and roadmap with you.
+
+📩 **Get in touch:** support@evershop.io
+
+## Special Thanks
+
+<p>
+  <a href="https://www.digitalocean.com/">
+    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_horizontal_blue.svg" width="201px">
+  </a>
+</p>

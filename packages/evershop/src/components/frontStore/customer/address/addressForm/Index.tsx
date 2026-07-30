@@ -1,9 +1,10 @@
 import { CustomerAddressForm } from '@components/frontStore/customer/address/addressForm/AddressForm.js';
 import { AddressFormLoadingSkeleton } from '@components/frontStore/customer/address/addressForm/AddressFormLoadingSkeleton.js';
+import { CustomerAddressGraphql } from '@evershop/evershop/types/customerAddress';
 import React from 'react';
 import { useQuery } from 'urql';
 
-const CountriesQuery = `
+const AllowedCountriesQuery = `
   query Country {
     allowedCountries  {
       value: code
@@ -16,49 +17,53 @@ const CountriesQuery = `
   }
 `;
 
-export interface Address {
-  id?: number;
-  address1?: string;
-  address2?: string;
-  city?: string;
-  country?: {
-    code: string;
-  };
-  fullName?: string;
-  postcode?: string;
-  province?: {
-    code: string;
-  };
-  telephone?: string;
-}
+const AllCountriesQuery = `
+  query Country {
+    countries {
+      value: code
+      label: name
+      provinces {
+        label: name
+        value: code
+      }
+    }
+  }
+`;
 
 interface IndexProps {
-  address?: Address;
+  address?: CustomerAddressGraphql;
   areaId?: string;
   fieldNamePrefix?: string;
+  countryScope?: 'allowed' | 'all';
 }
 
 export default function Index({
   address = {},
   areaId = 'customerAddressForm',
-  fieldNamePrefix = 'address'
+  fieldNamePrefix = 'address',
+  countryScope = 'allowed'
 }: IndexProps) {
   const [result] = useQuery({
-    query: CountriesQuery
+    query: countryScope === 'all' ? AllCountriesQuery : AllowedCountriesQuery
   });
 
   const { data, fetching, error } = result;
 
   if (fetching) return <AddressFormLoadingSkeleton />;
   if (error) {
-    return <p className="text-critical">{error.message}</p>;
+    return <p className="text-destructive">{error.message}</p>;
   }
+
+  const countries =
+    countryScope === 'all'
+      ? data?.countries || []
+      : data?.allowedCountries || [];
 
   return (
     <CustomerAddressForm
       address={address}
       areaId={areaId}
-      allowCountries={data.allowedCountries}
+      allowCountries={countries}
       fieldNamePrefix={fieldNamePrefix}
     />
   );

@@ -3,7 +3,7 @@ import { basename, dirname } from 'path';
 import { Application } from 'express';
 import { minimatch } from 'minimatch';
 import { has } from '../../../bin/dev/register.js';
-import { getEnabledJobs } from '../../../lib/cronjob/jobManager.js';
+import { peekEnabledJobs } from '../../../lib/cronjob/jobManager.js';
 import { debug, error } from '../../../lib/log/logger.js';
 import { getRoute } from '../../../lib/router/Router.js';
 import { broadcast } from './broadcast.js';
@@ -41,9 +41,34 @@ function isValidRouteFolder(name: string): boolean {
 }
 
 export function detectEffect(event: Event): Effect {
-  const jobs = getEnabledJobs();
+  // Non-freezing read: detectEffect runs for ANY file event, including ones
+  // that land while `start()` is still executing module bootstraps. The
+  // freezing getter (getEnabledJobs) here would turn such an event into a
+  // fatal "Job manager is in a read-only state" crash in a later bootstrap.
+  const jobs = peekEnabledJobs();
   if (isRestartRequired(event)) {
     return 'restart'; // No specific effect, just a restart required
+  } else if (minimatch(event.path.toString(), '**/*/[A-Z]*.+(jsx|tsx)')) {
+    const routeFolder = basename(dirname(event.path.toString()));
+    if (!isValidRouteFolder(routeFolder)) {
+      return 'unknown'; // Not a valid route folder, skip
+    }
+    if (event.type === 'create') {
+      if (
+        minimatch(
+          event.path.toString(),
+          '**/pages/+(admin|frontStore)/[A-Z]*.+(jsx|tsx)'
+        )
+      ) {
+        return 'update_component';
+      } else {
+        return 'add_component';
+      }
+    } else if (event.type === 'delete') {
+      return 'remove_component';
+    } else {
+      return 'update_component';
+    }
   } else if (minimatch(event.path.toString(), '**/+(api|admin|frontStore)/*')) {
     const fileName = basename(event.path.toString());
     if (!isValidRouteFolder(fileName)) {
@@ -133,18 +158,6 @@ export function detectEffect(event: Event): Effect {
       return 'remove_front_store_route';
     } else {
       return 'update_front_store_route';
-    }
-  } else if (minimatch(event.path.toString(), '**/*/[A-Z]*.+(jsx|tsx)')) {
-    const routeFolder = basename(dirname(event.path.toString()));
-    if (!isValidRouteFolder(routeFolder)) {
-      return 'unknown'; // Not a valid route folder, skip
-    }
-    if (event.type === 'create') {
-      return 'add_component';
-    } else if (event.type === 'delete') {
-      return 'remove_component';
-    } else {
-      return 'update_component';
     }
   } else if (
     minimatch(event.path.toString(), '**/*/*.graphql') ||

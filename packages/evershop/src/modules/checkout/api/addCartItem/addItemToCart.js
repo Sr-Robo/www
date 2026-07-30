@@ -1,4 +1,5 @@
 import { select } from '@evershop/postgres-query-builder';
+import { translate } from '../../../../lib/locale/translate/translate.js';
 import { pool } from '../../../../lib/postgres/connection.js';
 import {
   INVALID_PAYLOAD,
@@ -21,7 +22,7 @@ export default async (request, response, next) => {
       response.json({
         error: {
           status: INVALID_PAYLOAD,
-          message: 'Invalid cart id'
+          message: translate('Invalid cart id')
         }
       });
       return;
@@ -39,7 +40,7 @@ export default async (request, response, next) => {
       response.json({
         error: {
           status: INVALID_PAYLOAD,
-          message: 'Product not found'
+          message: translate('Product not found')
         }
       });
       return;
@@ -48,8 +49,6 @@ export default async (request, response, next) => {
     // If everything is fine, add the product to the cart
     const item = await cart.addItem(product.product_id, parseInt(qty, 10));
     await saveCart(cart);
-    // Set the new cart id to the context, so next middleware can use it
-    setContextValue(request, 'cartId', cart.getData('uuid'));
     response.status(OK);
     response.$body = {
       data: {

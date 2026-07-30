@@ -3,15 +3,18 @@ import { join } from 'path';
 import { pathToFileURL } from 'url';
 import { getEnabledTheme } from '../../../lib/util/getEnabledTheme.js';
 
-export async function getTailwindConfig(route) {
-  const defaultTailwindConfig = route.isAdmin
+/**
+ * @deprecated This function is deprecated and will be removed in future versions.
+ */
+export async function getTailwindConfig(isAdmin = false) {
+  const defaultTailwindConfig = isAdmin
     ? await import('../../../modules/cms/services/tailwind.admin.config.js')
     : await import(
         '../../../modules/cms/services/tailwind.frontStore.config.js'
       );
 
   let tailwindConfig = {};
-  if (!route.isAdmin) {
+  if (!isAdmin) {
     // Get the current theme
     const theme = getEnabledTheme();
     if (

@@ -1,4 +1,7 @@
-import React from 'react';
+import { Button } from '@components/common/ui/Button.js';
+import { toast } from '@components/common/ui/Sonner.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
+import React, { useEffect, useState } from 'react';
 import {
   useForm,
   FormProvider,
@@ -7,7 +10,6 @@ import {
   SubmitHandler,
   UseFormReturn
 } from 'react-hook-form';
-import { toast } from 'react-toastify';
 
 interface FormProps<T extends FieldValues = FieldValues>
   extends Omit<
@@ -15,12 +17,12 @@ interface FormProps<T extends FieldValues = FieldValues>
     'onSubmit' | 'onError'
   > {
   form?: UseFormReturn<T>;
-  action: string;
+  action?: string;
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   formOptions?: UseFormProps<T>;
   onSubmit?: SubmitHandler<T>;
   onSuccess?: (response: any, data: T) => void;
-  onError?: (error: any, data: T) => void;
+  onError?: (error: string, data: T) => void;
   successMessage?: string;
   errorMessage?: string;
   submitBtn?: boolean;
@@ -37,28 +39,32 @@ export function Form<T extends FieldValues = FieldValues>({
   onSubmit,
   onSuccess,
   onError,
-  successMessage = 'Saved successfully!',
-  errorMessage = 'Something went wrong! Please try again.',
+  successMessage = _('Saved successfully!'),
+  errorMessage = _('Something went wrong! Please try again.'),
   submitBtn = true,
-  submitBtnText = 'Save',
+  submitBtnText = _('Save'),
   loading = false,
   children,
   className,
   noValidate = true,
   ...props
 }: FormProps<T>) {
-  const methods =
+  const theForm =
     externalForm ||
     useForm<T>({
       shouldUnregister: true,
+      shouldFocusError: false,
       ...formOptions
     });
   const {
     handleSubmit,
     formState: { isSubmitting }
-  } = methods;
+  } = theForm;
 
   const defaultSubmit: SubmitHandler<T> = async (data) => {
+    if (!action) {
+      return;
+    }
     try {
       const response = await fetch(action, {
         method,
@@ -72,7 +78,7 @@ export function Form<T extends FieldValues = FieldValues>({
 
       if (result.error) {
         if (onError) {
-          onError(result.error, data);
+          onError(result.error.message, data);
         } else {
           toast.error(result.error.message || errorMessage);
         }
@@ -83,19 +89,61 @@ export function Form<T extends FieldValues = FieldValues>({
       }
     } catch (error) {
       if (onError) {
-        onError(error, data);
+        onError(
+          errorMessage || (error instanceof Error ? error.message : ''),
+          data
+        );
       } else {
-        toast.error(errorMessage);
+        toast.error(
+          errorMessage || (error instanceof Error ? error.message : '')
+        );
       }
     }
   };
 
+  const [canFocus, setCanFocus] = useState(true);
+
+  const onValidationError = () => {
+    setCanFocus(true);
+  };
+
+  useEffect(() => {
+    if (theForm.formState.errors && canFocus) {
+      const elements = Array.from(
+        document.querySelectorAll('[aria-invalid="true"]')
+      ) as HTMLElement[];
+      elements.sort(
+        (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top
+      );
+
+      if (elements.length > 0) {
+        const errorElement = elements[0];
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        errorElement.focus({ preventScroll: true });
+        setCanFocus(false);
+      }
+    }
+  }, [theForm.formState, canFocus]);
+
   const handleFormSubmit = onSubmit || defaultSubmit;
 
   return (
-    <FormProvider {...methods}>
+    <FormProvider {...theForm}>
       <form
-        onSubmit={handleSubmit(handleFormSubmit)}
+        onSubmit={(event) => {
+          // Nested forms must not submit this form. Dialogs render through
+          // React portals, and portals bubble events through the REACT tree
+          // (not the DOM tree) — so a popup form mounted inside this form
+          // (e.g. the core method editor inside the provider-settings page
+          // form) fires this handler too. Only handle submissions that
+          // originate from THIS form element, and stop our own submission
+          // from reaching ancestor forms.
+          if (event.target !== event.currentTarget) {
+            return;
+          }
+          event.stopPropagation();
+          handleSubmit(handleFormSubmit, onValidationError)(event);
+        }}
         className={className}
         noValidate={noValidate}
         {...props}
@@ -103,50 +151,18 @@ export function Form<T extends FieldValues = FieldValues>({
         <fieldset disabled={loading}>{children}</fieldset>
 
         {submitBtn && (
-          <div className="mt-6 flex justify-end">
-            <button
+          <div className="mt-4">
+            <Button
+              title={submitBtnText}
+              // `type="submit"` submits through the form's own `onSubmit`
+              // (which runs `handleSubmit`) and also covers Enter-to-submit. An
+              // extra onClick calling handleSubmit here would fire the pipeline
+              // a second time — two validate+POST passes per click.
               type="submit"
-              className={
-                !isSubmitting && !loading
-                  ? 'button primary'
-                  : 'button primary loading'
-              }
+              isLoading={isSubmitting || loading}
             >
-              {!isSubmitting && !loading ? (
-                <span>{submitBtnText}</span>
-              ) : (
-                <svg
-                  style={{
-                    background: 'rgb(255, 255, 255, 0)',
-                    display: 'block',
-                    shapeRendering: 'auto'
-                  }}
-                  width="1rem"
-                  height="1rem"
-                  viewBox="0 0 100 100"
-                  preserveAspectRatio="xMidYMid"
-                >
-                  <circle
-                    cx="50"
-                    cy="50"
-                    fill="none"
-                    stroke="#5c5f62"
-                    strokeWidth="10"
-                    r="43"
-                    strokeDasharray="202.63272615654165 69.54424205218055"
-                  >
-                    <animateTransform
-                      attributeName="transform"
-                      type="rotate"
-                      repeatCount="indefinite"
-                      dur="1s"
-                      values="0 50 50;360 50 50"
-                      keyTimes="0;1"
-                    />
-                  </circle>
-                </svg>
-              )}
-            </button>
+              {submitBtnText}
+            </Button>
           </div>
         )}
       </form>

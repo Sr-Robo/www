@@ -1,7 +1,7 @@
 import { InputField } from '@components/common/form/InputField.js';
 import { SelectField } from '@components/common/form/SelectField.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
-import { _ } from '../../../../../lib/locale/translate/_.js';
 
 interface ProvinceAndPostcodeProps {
   provinces: {
@@ -38,7 +38,7 @@ export function ProvinceAndPostcode({
       <div>
         <InputField
           name={getFieldName ? getFieldName('postcode') : 'postcode'}
-          value={postcode}
+          defaultValue={postcode}
           label={_('Postcode')}
           placeholder={_('Postcode')}
           required

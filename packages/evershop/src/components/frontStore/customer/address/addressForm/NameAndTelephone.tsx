@@ -1,7 +1,7 @@
 import { InputField } from '@components/common/form/InputField.js';
 import { TelField } from '@components/common/form/TelField.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
-import { _ } from '../../../../../lib/locale/translate/_.js';
 
 interface NameAndTelephoneProps {
   fullName?: string;
@@ -18,19 +18,19 @@ export function NameAndTelephone({
       <div>
         <InputField
           name={getFieldName ? getFieldName('full_name') : 'full_name'}
-          value={fullName}
+          defaultValue={fullName}
           label={_('Full name')}
           placeholder={_('Full name')}
           required
           validation={{
-            required: _(`'Full name is required`)
+            required: _('Full name is required')
           }}
         />
       </div>
       <div>
         <TelField
           name={getFieldName ? getFieldName('telephone') : 'telephone'}
-          value={telephone}
+          defaultValue={telephone}
           label={_('Telephone')}
           placeholder={_('Telephone')}
           required

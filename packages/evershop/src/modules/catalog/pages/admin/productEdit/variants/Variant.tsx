@@ -1,3 +1,7 @@
+import { ProductNoThumbnail } from '@components/common/ProductNoThumbnail.js';
+import { Button } from '@components/common/ui/Button.js';
+import { TableCell, TableRow } from '@components/common/ui/Table.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
 import { VariantGroup } from '../VariantGroup.js';
 import { EditVariant } from './EditVariant.js';
@@ -9,40 +13,56 @@ export const Variant: React.FC<{
   variantGroup: VariantGroup;
 }> = ({ variant, refresh, variantGroup }) => {
   return (
-    <tr>
-      <td>
-        <img
-          style={{ maxWidth: '50px', height: 'auto' }}
-          src={variant?.product?.image?.url}
-          alt=""
-        />
-      </td>
-      {variant.attributes.map((a) => (
-        <td key={a.attributeId}>
-          <label>{a.optionText || '--'}</label>
-        </td>
-      ))}
-      <td>
-        <a href={variant.product.editUrl} className="hover:text-interactive">
-          {variant.product?.sku}
-        </a>
-      </td>
-      <td>{variant.product?.price?.regular?.text}</td>
-      <td>{variant.product?.inventory?.qty}</td>
-      <td>
-        {variant.product?.status === 1 ? (
-          <span className="text-success">Enabled</span>
+    <TableRow>
+      <TableCell>
+        {variant.product?.image?.url ? (
+          <img
+            className="size-9 rounded-md border border-border object-cover"
+            src={variant?.product?.image?.url}
+            alt=""
+          />
         ) : (
-          <span className="text-critical">Disabled</span>
+          <ProductNoThumbnail className="size-9 text-muted-foreground" />
         )}
-      </td>
-      <td>
+      </TableCell>
+      {variantGroup.attributes.map((a) => {
+        const option = variant.attributes.find(
+          (attr) => attr.attributeCode === a.attributeCode
+        );
+        return (
+          <TableCell key={a.attributeId}>
+            <label>{option?.optionText || '--'}</label>
+          </TableCell>
+        );
+      })}
+      <TableCell>
+        <Button
+          variant={'link'}
+          className={'h-auto p-0 hover:cursor-pointer'}
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = variant.product.editUrl;
+          }}
+        >
+          {variant.product?.sku}
+        </Button>
+      </TableCell>
+      <TableCell>{variant.product?.price?.regular?.text}</TableCell>
+      <TableCell>{variant.product?.inventory?.qty}</TableCell>
+      <TableCell>
+        {variant.product?.status === 1 ? (
+          <span className="text-primary font-medium">{_('Enabled')}</span>
+        ) : (
+          <span className="text-destructive font-medium">{_('Disabled')}</span>
+        )}
+      </TableCell>
+      <TableCell>
         <EditVariant
           variant={variant}
           refresh={refresh}
           variantGroup={variantGroup}
         />
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 };

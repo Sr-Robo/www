@@ -1,58 +1,58 @@
-import { Card } from '@components/admin/Card.js';
 import { CategorySelector } from '@components/admin/CategorySelector.js';
 import Area from '@components/common/Area.js';
 import { Editor } from '@components/common/form/Editor.js';
 import { InputField } from '@components/common/form/InputField.js';
 import { NumberField } from '@components/common/form/NumberField.js';
 import { SelectField } from '@components/common/form/SelectField.js';
-import { Modal } from '@components/common/modal/Modal.js';
-import { useModal } from '@components/common/modal/useModal.js';
+import { Button } from '@components/common/ui/Button.js';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@components/common/ui/Card.js';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@components/common/ui/Dialog.js';
+import { Label } from '@components/common/ui/Label.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
 import { useQuery } from 'urql';
 import './General.scss';
-import { _ } from '../../../../../lib/locale/translate/_.js';
+import { useFormContext } from 'react-hook-form';
 
-const SKUPriceWeight: React.FC<{
+const SKUAndPrice: React.FC<{
   sku: string;
   price: {
-    value: number | undefined;
-  };
-  weight: {
     value: number | undefined;
   };
   setting: {
     storeCurrency: string;
     weightUnit: string;
   };
-}> = ({ sku, price, weight, setting }) => {
+}> = ({ sku, price, setting }) => {
   return (
-    <div className="grid grid-cols-3 gap-2 mt-4">
+    <div className="grid grid-cols-2 gap-2">
       <InputField
         name="sku"
-        label="SKU"
-        placeholder="Enter SKU"
+        label={_('SKU')}
+        placeholder={_('Enter SKU')}
         defaultValue={sku}
         required
         helperText={_('SKU must be unique')}
       />
       <NumberField
         name="price"
-        placeholder="Enter price"
-        label={`Price`}
+        placeholder={_('Enter price')}
+        label={_('Price')}
         defaultValue={price?.value}
         unit={setting.storeCurrency}
         min={0}
         required
-      />
-      <NumberField
-        name="weight"
-        placeholder="Enter weight"
-        label={`Weight`}
-        defaultValue={weight?.value}
-        unit={setting.weightUnit}
-        required
-        validation={{ min: 1 }}
-        helperText={_('Weight must be a positive number')}
       />
     </div>
   );
@@ -61,6 +61,7 @@ const SKUPriceWeight: React.FC<{
 const CategoryQuery = `
   query Query ($id: Int!) {
     category(id: $id) {
+      categoryId
       name
       path {
         name
@@ -74,6 +75,7 @@ const ProductCategory: React.FC<{
   onChange: () => void;
   onUnassign: () => void;
 }> = ({ categoryId, onChange, onUnassign }) => {
+  const { register } = useFormContext();
   const [result] = useQuery({
     query: CategoryQuery,
     variables: {
@@ -83,14 +85,14 @@ const ProductCategory: React.FC<{
   const { data, fetching, error } = result;
   if (error) {
     return (
-      <p className="text-critical">
-        There was an error fetching categories.
+      <p className="text-destructive">
+        {_('There was an error fetching categories.')}
         {error.message}
       </p>
     );
   }
   if (fetching) {
-    return <span>Loading...</span>;
+    return <span>{_('Loading...')}</span>;
   }
   return (
     <div>
@@ -108,7 +110,7 @@ const ProductCategory: React.FC<{
             onChange();
           }}
         >
-          Change
+          {_('Change')}
         </a>
         <a
           href="#"
@@ -116,11 +118,12 @@ const ProductCategory: React.FC<{
             e.preventDefault();
             onUnassign();
           }}
-          className="text-critical ml-5"
+          className="text-destructive ml-5"
         >
-          Unassign
+          {_('Unassign')}
         </a>
       </span>
+      <input type="hidden" {...register('category_id')} value={categoryId} />
     </div>
   );
 };
@@ -136,56 +139,65 @@ const CategorySelect: React.FC<{
       }
     | undefined;
 }> = ({ product }) => {
+  const { setValue } = useFormContext();
   const [category, setCategory] = React.useState(
     product ? product.category : null
   );
-  const modal = useModal();
-
+  const [dialogOpen, setDialogOpen] = React.useState(false);
   const onSelect = (categoryId) => {
     setCategory({ categoryId });
-    modal.close();
+    setValue('category_id', categoryId || '', {
+      shouldDirty: true,
+      shouldTouch: true
+    });
+    setDialogOpen(false);
   };
 
   return (
-    <div className="mt-4 relative">
-      <div className="mb-2">Category</div>
-      {category && (
-        <div className="border rounded border-[#c9cccf] mb-2 p-2">
-          <ProductCategory
-            categoryId={category.categoryId}
-            onChange={() => modal.open()}
-            onUnassign={() => setCategory(null)}
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <div className="space-y-3">
+        <Label>{_('Category')}</Label>
+        {category && (
+          <div className="border rounded border-border p-2">
+            <ProductCategory
+              categoryId={category.categoryId}
+              onChange={() => {
+                setDialogOpen(true);
+              }}
+              onUnassign={() => {
+                setCategory(null);
+                setValue('category_id', '', {
+                  shouldDirty: true,
+                  shouldTouch: true
+                });
+              }}
+            />
+          </div>
+        )}
+        {!category && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.preventDefault();
+              setDialogOpen(true);
+            }}
+          >
+            {_('Select category')}
+          </Button>
+        )}
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{_('Select Category')}</DialogTitle>
+          </DialogHeader>
+          <CategorySelector
+            onSelect={onSelect}
+            onUnSelect={() => {}}
+            selectedCategories={category ? [category] : []}
           />
-        </div>
-      )}
-      {!category && (
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            modal.open();
-          }}
-          className="text-interactive"
-        >
-          Select category
-        </a>
-      )}
-      <Modal
-        title="Select Category"
-        isOpen={modal.isOpen}
-        onClose={modal.close}
-      >
-        <CategorySelector
-          onSelect={onSelect}
-          onUnSelect={() => {}}
-          selectedCategories={category ? [category] : []}
-        />
-      </Modal>
-      {category && (
-        <input type="hidden" name="category_id" value={category.categoryId} />
-      )}
-      {!category && <input type="hidden" name="category_id" value="" />}
-    </div>
+        </DialogContent>
+      </div>
+    </Dialog>
   );
 };
 
@@ -231,26 +243,46 @@ interface GeneralProps {
       text: string;
     }>;
   };
+  duplicateSource?: {
+    productId: number;
+  } | null;
 }
 export default function General({
   product,
   setting,
-  productTaxClasses: { items: taxClasses }
+  productTaxClasses: { items: taxClasses },
+  duplicateSource
 }: GeneralProps) {
+  // Duplicate mode (productNew?duplicate=<uuid>): the form is prefilled from
+  // the source product, but the SKU must be unique and an identical name is
+  // ambiguous in the grid — suffix both defaults.
+  const defaultName =
+    duplicateSource && product?.name ? `${product.name} (copy)` : product?.name;
+  const defaultSku =
+    duplicateSource && product?.sku
+      ? `${product.sku}-copy`
+      : product?.sku || '';
   return (
-    <Card title="General">
-      <Card.Session>
+    <Card>
+      <CardHeader>
+        <CardTitle>{_('General Information')}</CardTitle>
+        <CardDescription>
+          {_('Manage the general information of the product.')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <Area
           id="productEditGeneral"
+          className="flex flex-col gap-2"
           coreComponents={[
             {
               component: {
                 default: (
                   <InputField
                     name="name"
-                    placeholder="Enter product name"
-                    label="Product Name"
-                    defaultValue={product?.name}
+                    placeholder={_('Enter product name')}
+                    label={_('Product Name')}
+                    defaultValue={defaultName}
                     required
                     helperText={_('Product name is required')}
                   />
@@ -262,20 +294,19 @@ export default function General({
             {
               component: {
                 default: (
-                  <SKUPriceWeight
-                    sku={product?.sku || ''}
+                  <SKUAndPrice
+                    sku={defaultSku}
                     price={
                       product?.price.regular || {
                         value: undefined
                       }
                     }
-                    weight={product?.weight || { value: undefined }}
                     setting={setting}
                   />
                 )
               },
               sortOrder: 20,
-              id: 'SKUPriceWeight'
+              id: 'SKUAndPrice'
             },
             {
               component: {
@@ -289,7 +320,7 @@ export default function General({
                 default: (
                   <SelectField
                     name="tax_class"
-                    label="Tax Class"
+                    label={_('Tax Class')}
                     options={taxClasses.map((taxClass) => ({
                       value: taxClass.value,
                       label: taxClass.text
@@ -308,7 +339,7 @@ export default function General({
                 default: (
                   <Editor
                     name="description"
-                    label="Description"
+                    label={_('Description')}
                     value={product?.description}
                   />
                 )
@@ -318,7 +349,7 @@ export default function General({
             }
           ]}
         />
-      </Card.Session>
+      </CardContent>
     </Card>
   );
 }
@@ -353,6 +384,9 @@ export const query = `
           name
         }
       }
+    }
+    duplicateSource: product(id: getContextValue("duplicateSourceId", null)) {
+      productId
     }
     setting {
       weightUnit

@@ -5,10 +5,9 @@ COPY package*.json .
 COPY packages ./packages
 COPY themes ./themes
 COPY extensions ./extensions
-COPY public ./public
-COPY media ./media
 COPY config ./config
 COPY translations ./translations
+RUN mkdir -p public media
 RUN npm install
 RUN npm run compile -w @evershop/postgres-query-builder
 RUN npm run compile -w admin_ptbr

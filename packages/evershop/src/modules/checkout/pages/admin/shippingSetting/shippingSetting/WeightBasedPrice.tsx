@@ -1,89 +1,117 @@
 import { NumberField } from '@components/common/form/NumberField.js';
+import { Button } from '@components/common/ui/Button.js';
+import {
+  Table,
+  TableRow,
+  TableBody,
+  TableHeader,
+  TableHead,
+  TableCell,
+  TableFooter
+} from '@components/common/ui/Table.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
 export interface WeightBasedPriceProps {
   lines: Array<{
     minWeight: { value: number };
     cost: { value: number };
-    key?: string;
   }>;
 }
 
 export function WeightBasedPrice({ lines }: WeightBasedPriceProps) {
-  const [rows, setRows] = React.useState(
-    lines.map((line) => ({
-      ...line,
-      key: Math.random().toString(36).substring(7)
-    }))
-  );
+  const { control } = useFormContext();
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'weight_based_cost'
+  });
+
+  // Initialize the field array with existing lines if it's empty
+  React.useEffect(() => {
+    if (fields.length === 0 && lines.length > 0) {
+      lines.forEach((line) => {
+        append({
+          min_weight: line.minWeight?.value,
+          cost: line.cost?.value
+        });
+      });
+    }
+  }, [lines, fields.length, append]);
+
+  // Ensure there's at least one row
+  React.useEffect(() => {
+    if (lines.length === 0) {
+      append({
+        min_weight: undefined,
+        cost: undefined
+      });
+    }
+  }, [lines.length, append]);
+
   return (
     <div className="my-5">
-      <table className="border-collapse divide-y">
-        <thead>
-          <tr>
-            <th className="border-none">Min Weight</th>
-            <th className="border-none">Shipping Cost</th>
-            <th className="border-none">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.key} className="border-divider py-5">
-              <td className="border-none">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="border-none">{_('Min Weight')}</TableHead>
+            <TableHead className="border-none">{_('Shipping Cost')}</TableHead>
+            <TableHead className="border-none">{_('Action')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {fields.map((field, index) => (
+            <TableRow key={field.id} className="border-divider py-5">
+              <TableCell className="border-none">
                 <NumberField
                   name={`weight_based_cost.${index}.min_weight`}
-                  placeholder="Min Weight"
-                  defaultValue={row.minWeight?.value}
+                  placeholder={_('Min Weight')}
                   required
-                  validation={{ required: 'Min weight is required' }}
+                  validation={{ required: _('Min weight is required') }}
                 />
-              </td>
-              <td className="border-none">
+              </TableCell>
+              <TableCell className="border-none">
                 <NumberField
                   name={`weight_based_cost.${index}.cost`}
-                  placeholder="Shipping Cost"
-                  defaultValue={row.cost?.value}
+                  placeholder={_('Shipping Cost')}
                   required
-                  validation={{ required: 'Shipping cost is required' }}
+                  validation={{ required: _('Shipping cost is required') }}
                 />
-              </td>
-              <td className="border-none">
-                <a
-                  href="#"
-                  onClick={() => {
-                    setRows(rows.filter((r) => r.key !== row.key));
-                  }}
-                  className="text-critical"
-                >
-                  Delete
-                </a>
-              </td>
-            </tr>
+              </TableCell>
+              <TableCell className="border-none">
+                {fields.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="text-destructive"
+                  >
+                    {_('Delete')}
+                  </button>
+                )}
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colSpan={3} className="border-none">
-              <a
-                href="#"
-                className="text-interactive"
+        </TableBody>
+        <TableFooter className="border-border">
+          <TableRow>
+            <TableCell colSpan={3} className="border-none">
+              <Button
+                type="button"
+                size={'sm'}
+                variant={'outline'}
                 onClick={() => {
-                  setRows([
-                    ...rows,
-                    {
-                      minWeight: { value: 0 },
-                      cost: { value: 0 },
-                      key: Math.random().toString(36).substring(7)
-                    }
-                  ]);
+                  append({
+                    min_weight: undefined,
+                    cost: undefined
+                  });
                 }}
               >
-                + Add Line
-              </a>
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+                {_('+ Add Line')}
+              </Button>
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      </Table>
     </div>
   );
 }

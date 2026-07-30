@@ -1,8 +1,15 @@
+import { Tooltip } from '@components/common/form/Tooltip.js';
+import { getNestedError } from '@components/common/form/utils/getNestedError.js';
+import { useScopedFieldName } from '@components/common/page-builder/WidgetSettingsScope.js';
+import { Field, FieldError, FieldLabel } from '@components/common/ui/Field.js';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput
+} from '@components/common/ui/InputGroup.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
-import { useFormContext, RegisterOptions } from 'react-hook-form';
-import { _ } from '../../../lib/locale/translate/_.js';
-import { Tooltip } from './Tooltip.js';
-import { getNestedError } from './utils/getNestedError.js';
+import { useFormContext, RegisterOptions, Controller } from 'react-hook-form';
 
 interface NumberFieldProps {
   name: string;
@@ -23,6 +30,8 @@ interface NumberFieldProps {
   validation?: RegisterOptions;
   onChange?: (value: number | null) => void;
   wrapperClassName?: string;
+  prefixIcon?: React.ReactNode;
+  suffixIcon?: React.ReactNode;
 }
 
 export function NumberField({
@@ -30,7 +39,7 @@ export function NumberField({
   label,
   placeholder,
   className = '',
-  wrapperClassName = 'form-field',
+  wrapperClassName,
   required = false,
   disabled = false,
   min,
@@ -44,22 +53,32 @@ export function NumberField({
   helperText,
   validation,
   onChange,
+  prefixIcon,
+  suffixIcon,
   ...props
 }: NumberFieldProps) {
   const {
-    register,
+    control,
     formState: { errors }
   } = useFormContext();
-  const fieldError = getNestedError(name, errors, error);
-  const fieldId = `field-${name}`;
+  const resolvedName = useScopedFieldName(name);
+  const fieldError = getNestedError(resolvedName, errors, error);
+  const fieldId = `field-${resolvedName}`;
 
   const validationRules: RegisterOptions = {
-    valueAsNumber: true
-  };
+    setValueAs: (value) => {
+      // Handle empty or null values
+      if (value === '' || value === null || value === undefined) {
+        return null;
+      }
 
-  if (defaultValue !== undefined) {
-    validationRules.value = defaultValue;
-  }
+      // Convert string to number
+      const numValue = allowDecimals ? parseFloat(value) : parseInt(value, 10);
+
+      // Return null if conversion resulted in NaN
+      return isNaN(numValue) ? null : numValue;
+    }
+  };
 
   if (validation) {
     Object.assign(validationRules, validation);
@@ -108,66 +127,23 @@ export function NumberField({
     };
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    let numValue: number | null = null;
-
-    if (inputValue !== '') {
-      if (allowDecimals) {
-        numValue = parseFloat(inputValue);
-      } else {
-        numValue = parseInt(inputValue, 10);
-      }
-    }
-
-    if (onChange) {
-      onChange(numValue);
-    }
-  };
-
   const inputStep = step !== undefined ? step : allowDecimals ? 'any' : '1';
 
-  return (
-    <div className={wrapperClassName}>
-      {label && (
-        <label htmlFor={fieldId}>
-          {label}
-          {required && <span className="required-indicator">*</span>}
-          {helperText && <Tooltip content={helperText} position="top" />}
-        </label>
-      )}
+  const inputClassName = `${fieldError ? 'error' : ''} ${
+    unit ? 'has-unit' : ''
+  } ${className || ''} ${prefixIcon ? '!pl-10' : ''} ${
+    suffixIcon ? '!pr-10' : ''
+  }`.trim();
 
-      {unit ? (
-        <div className="number-field-container">
-          {unitPosition === 'left' && (
-            <span className="number-unit">{unit}</span>
-          )}
-          <input
-            id={fieldId}
-            type="number"
-            placeholder={placeholder}
-            disabled={disabled}
-            min={min}
-            max={max}
-            step={inputStep}
-            className={`${fieldError ? 'error' : ''} ${
-              unit ? 'has-unit' : ''
-            } ${className || ''}`}
-            aria-invalid={fieldError ? 'true' : 'false'}
-            aria-describedby={fieldError ? `${fieldId}-error` : undefined}
-            {...register(name, validationRules)}
-            onChange={(e) => {
-              register(name).onChange(e);
-              handleChange(e);
-            }}
-            {...props}
-          />
-          {unitPosition === 'right' && (
-            <span className="number-unit">{unit}</span>
-          )}
-        </div>
-      ) : (
-        <input
+  const renderInput = () => (
+    <Controller
+      name={resolvedName}
+      control={control}
+      defaultValue={defaultValue ?? null}
+      rules={validationRules}
+      render={({ field }) => (
+        <InputGroupInput
+          {...field}
           id={fieldId}
           type="number"
           placeholder={placeholder}
@@ -175,27 +151,67 @@ export function NumberField({
           min={min}
           max={max}
           step={inputStep}
-          className={`${fieldError !== undefined ? 'error' : ''} ${
-            className || ''
-          }`}
-          aria-invalid={fieldError !== undefined ? 'true' : 'false'}
-          aria-describedby={
-            fieldError !== undefined ? `${fieldId}-error` : undefined
-          }
-          {...register(name, validationRules)}
+          className={inputClassName}
+          aria-invalid={fieldError ? 'true' : 'false'}
+          aria-describedby={fieldError ? `${fieldId}-error` : undefined}
+          value={field.value ?? ''}
           onChange={(e) => {
-            register(name).onChange(e);
-            handleChange(e);
+            const inputValue = e.target.value;
+            let numValue: number | null = null;
+
+            if (inputValue !== '') {
+              if (allowDecimals) {
+                numValue = parseFloat(inputValue);
+              } else {
+                numValue = parseInt(inputValue, 10);
+              }
+              numValue = isNaN(numValue) ? null : numValue;
+            }
+
+            field.onChange(numValue);
+            if (onChange) {
+              onChange(numValue);
+            }
           }}
           {...props}
         />
       )}
+    />
+  );
 
-      {fieldError && (
-        <p id={`${fieldId}-error`} className="field-error">
-          {fieldError}
-        </p>
+  return (
+    <Field
+      data-invalid={fieldError ? 'true' : 'false'}
+      className={wrapperClassName}
+    >
+      {label && (
+        <FieldLabel htmlFor={fieldId}>
+          <>
+            {label}
+            {required && <span className="text-destructive">*</span>}
+            {helperText && <Tooltip content={helperText} position="top" />}
+          </>
+        </FieldLabel>
       )}
-    </div>
+      <InputGroup>
+        {renderInput()}
+        {prefixIcon && (
+          <InputGroupAddon align={'inline-start'}>{prefixIcon}</InputGroupAddon>
+        )}
+        {suffixIcon && (
+          <InputGroupAddon align={'inline-end'}>{suffixIcon}</InputGroupAddon>
+        )}
+        {unit && (
+          <InputGroupAddon
+            align={unitPosition === 'right' ? 'inline-end' : 'inline-start'}
+          >
+            {unit}
+          </InputGroupAddon>
+        )}
+      </InputGroup>
+      {fieldError && (
+        <FieldError id={`${fieldId}-error`}>{fieldError}</FieldError>
+      )}
+    </Field>
   );
 }

@@ -1,13 +1,17 @@
+import { Tooltip } from '@components/common/form/Tooltip.js';
+import { getNestedError } from '@components/common/form/utils/getNestedError.js';
+import { useScopedFieldName } from '@components/common/page-builder/WidgetSettingsScope.js';
+import { Field, FieldError, FieldLabel } from '@components/common/ui/Field.js';
+import { InputGroupInput } from '@components/common/ui/InputGroup.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
 import {
   useFormContext,
   RegisterOptions,
   FieldPath,
-  FieldValues
+  FieldValues,
+  Controller
 } from 'react-hook-form';
-import { _ } from '../../../lib/locale/translate/_.js';
-import { Tooltip } from './Tooltip.js';
-import { getNestedError } from './utils/getNestedError.js';
 
 interface FileFieldProps<T extends FieldValues = FieldValues>
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name' | 'type'> {
@@ -25,7 +29,7 @@ export function FileField<T extends FieldValues = FieldValues>({
   name,
   label,
   error,
-  wrapperClassName = 'form-field',
+  wrapperClassName,
   helperText,
   required,
   validation,
@@ -36,14 +40,15 @@ export function FileField<T extends FieldValues = FieldValues>({
   ...props
 }: FileFieldProps<T>) {
   const {
-    register,
+    control,
     formState: { errors },
     watch
   } = useFormContext<T>();
+  const resolvedName = useScopedFieldName(name) as FieldPath<T>;
 
-  const fieldError = getNestedError(name, errors, error);
-  const fieldId = `field-${name}`;
-  const files = watch(name);
+  const fieldError = getNestedError(resolvedName, errors, error);
+  const fieldId = `field-${resolvedName}`;
+  const files = watch(resolvedName);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -77,27 +82,42 @@ export function FileField<T extends FieldValues = FieldValues>({
   };
 
   return (
-    <div className={`${wrapperClassName} ${fieldError ? 'error' : ''}`}>
+    <Field
+      data-invalid={fieldError ? 'true' : 'false'}
+      className={wrapperClassName}
+    >
       {label && (
-        <label htmlFor={fieldId}>
-          {label}
-          {required && <span className="required-indicator">*</span>}
-          {helperText && <Tooltip content={helperText} position="top" />}
-        </label>
+        <FieldLabel htmlFor={fieldId}>
+          <>
+            {label}
+            {required && <span className="text-destructive">*</span>}
+            {helperText && <Tooltip content={helperText} position="top" />}
+          </>
+        </FieldLabel>
       )}
 
-      <input
-        id={fieldId}
-        type="file"
-        accept={accept}
-        multiple={multiple}
-        {...register(name, validationRules)}
-        className={className}
-        aria-invalid={fieldError !== undefined ? 'true' : 'false'}
-        aria-describedby={
-          fieldError !== undefined ? `${fieldId}-error` : undefined
-        }
-        {...props}
+      <Controller
+        name={resolvedName}
+        control={control}
+        rules={validationRules}
+        render={({ field: { onChange, value, ...field } }) => (
+          <InputGroupInput
+            {...field}
+            id={fieldId}
+            type="file"
+            accept={accept}
+            multiple={multiple}
+            className={className}
+            aria-invalid={fieldError !== undefined ? 'true' : 'false'}
+            aria-describedby={
+              fieldError !== undefined ? `${fieldId}-error` : undefined
+            }
+            onChange={(e) => {
+              onChange(e.target.files);
+            }}
+            {...props}
+          />
+        )}
       />
 
       {maxSize && (
@@ -120,10 +140,8 @@ export function FileField<T extends FieldValues = FieldValues>({
       )}
 
       {fieldError && (
-        <p id={`${fieldId}-error`} className="field-error">
-          {fieldError}
-        </p>
+        <FieldError id={`${fieldId}-error`}>{fieldError}</FieldError>
       )}
-    </div>
+    </Field>
   );
 }

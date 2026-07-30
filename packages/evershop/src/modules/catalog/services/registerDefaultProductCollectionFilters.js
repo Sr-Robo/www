@@ -12,9 +12,22 @@ export default async function registerDefaultProductCollectionFilters() {
       callback: (query, operation, value, currentFilters) => {
         const where = query.getWhere();
         const bindingKey = `keyword_${uniqid()}`;
+        // Evaluate the full-text match in a MATERIALIZED CTE so the planner
+        // always answers it with the PRODUCT_SEARCH_INDEX GIN index. With the
+        // predicate inlined, the outer ORDER BY + LIMIT made the planner walk
+        // an index computing to_tsvector() row by row — fast for common
+        // terms, a full-table scan (seconds on large catalogs) for rare or
+        // unmatched ones. The old `%…%` wrapping is dropped: `%` is a LIKE
+        // wildcard, websearch_to_tsquery treats it as punctuation.
         where.addRaw(
           'AND',
-          `to_tsvector('simple', product_description.name || ' ' || product_description.description) @@ websearch_to_tsquery('simple', :${bindingKey})`,
+          `product.product_id IN (
+            WITH keyword_matches AS MATERIALIZED (
+              SELECT product_description_product_id FROM product_description
+              WHERE to_tsvector('simple', name || ' ' || description) @@ websearch_to_tsquery('simple', :${bindingKey})
+            )
+            SELECT product_description_product_id FROM keyword_matches
+          )`,
           {
             [bindingKey]: value
           }
@@ -191,24 +204,40 @@ export default async function registerDefaultProductCollectionFilters() {
   filterableAttributes.forEach((attribute) => {
     defaultFilters.push({
       key: attribute.attribute_code,
-      operation: ['in'],
+      operation: ['in', 'eq'],
       callback: (query, operation, val, currentFilters) => {
         const alias = `attribute_${uniqid()}`;
         // Split the value by comma and only get the positive integer
-        const values = val
-          .split(',')
-          .map((v) => parseInt(v, 10))
-          .filter((v) => v > 0);
-        query
-          .innerJoin('product_attribute_value_index', alias)
-          .on(`${alias}.product_id`, '=', 'product.product_id')
-          .and(`${alias}.attribute_id`, '=', value(attribute.attribute_id))
-          .and(`${alias}.option_id`, 'IN', value(values));
-        currentFilters.push({
-          key: attribute.attribute_code,
-          operation,
-          value: val
-        });
+        if (operation === 'in') {
+          const values = val
+            .split(',')
+            .map((v) => parseInt(v, 10))
+            .filter((v) => v > 0);
+          query
+            .innerJoin('product_attribute_value_index', alias)
+            .on(`${alias}.product_id`, '=', 'product.product_id')
+            .and(`${alias}.attribute_id`, '=', value(attribute.attribute_id))
+            .and(`${alias}.option_id`, 'IN', value(values));
+          currentFilters.push({
+            key: attribute.attribute_code,
+            operation,
+            value: val
+          });
+        } else if (operation === 'eq') {
+          const valueInt = parseInt(val, 10);
+          if (valueInt > 0) {
+            query
+              .innerJoin('product_attribute_value_index', alias)
+              .on(`${alias}.product_id`, '=', 'product.product_id')
+              .and(`${alias}.attribute_id`, '=', value(attribute.attribute_id))
+              .and(`${alias}.option_id`, '=', value(valueInt));
+            currentFilters.push({
+              key: attribute.attribute_code,
+              operation,
+              value: val
+            });
+          }
+        }
       }
     });
   });

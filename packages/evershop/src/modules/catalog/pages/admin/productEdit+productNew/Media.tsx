@@ -1,17 +1,24 @@
-import { Card } from '@components/admin/Card.js';
 import { ImageUploader } from '@components/admin/ImageUploader.js';
-import React, { useEffect, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@components/common/ui/Card.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
+import React, { useEffect } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 interface MediaProps {
   product?: {
     image?: {
-      id: string;
+      uuid: string;
       path: string;
       url: string;
     };
     gallery?: {
-      id: string;
+      uuid: string;
       path: string;
       url: string;
     }[];
@@ -22,7 +29,7 @@ export default function Media({ product }: MediaProps) {
   const { fields, append, remove, replace } = useFieldArray({
     name: 'images',
     control
-  });
+  }) as ReturnType<typeof useFieldArray>;
   useEffect(() => {
     const images = product?.image
       ? [product.image].concat(product?.gallery || [])
@@ -30,8 +37,16 @@ export default function Media({ product }: MediaProps) {
     replace(images);
   }, []);
   return (
-    <Card title="Media">
-      <Card.Session>
+    <Card title={_('Media')}>
+      <CardHeader>
+        <CardTitle>{_('Media')}</CardTitle>
+        <CardDescription>
+          {_(
+            'Manage product images and gallery. Drag and drop to reorder images.'
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <ImageUploader
           currentImages={
             product?.image ? [product.image].concat(product?.gallery || []) : []
@@ -39,7 +54,7 @@ export default function Media({ product }: MediaProps) {
           allowDelete={true}
           allowSwap={true}
           onDelete={(image) => {
-            const index = fields.findIndex((img) => img.id === image.id);
+            const index = fields.findIndex((img) => img.uuid === image.uuid);
             if (index !== -1) {
               remove(index);
             }
@@ -57,7 +72,7 @@ export default function Media({ product }: MediaProps) {
             Math.floor(Math.random() * (9999 - 1000)) + 1000
           }/${Math.floor(Math.random() * (9999 - 1000)) + 1000}`}
         />
-      </Card.Session>
+      </CardContent>
     </Card>
   );
 }
@@ -71,12 +86,12 @@ export const query = `
   query Query {
     product(id: getContextValue("productId", null)) {
       image {
-        id: uuid
+        uuid
         path
         url
       }
       gallery {
-        id: uuid
+        uuid
         path
         url
       }

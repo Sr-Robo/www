@@ -3,10 +3,10 @@ import { InputField } from '@components/common/form/InputField.js';
 import { SelectField } from '@components/common/form/SelectField.js';
 import { NameAndTelephone } from '@components/frontStore/customer/address/addressForm/NameAndTelephone.js';
 import { ProvinceAndPostcode } from '@components/frontStore/customer/address/addressForm/ProvinceAndPostcode.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
+import { CustomerAddressGraphql } from '@evershop/evershop/types/customerAddress';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { _ } from '../../../../../lib/locale/translate/_.js';
-import { Address } from './Index.js';
 
 interface CustomerAddressFormProps {
   allowCountries: {
@@ -17,17 +17,17 @@ interface CustomerAddressFormProps {
       label: string;
     }[];
   }[];
-  address?: Address;
+  address?: CustomerAddressGraphql;
   areaId?: string;
   fieldNamePrefix?: string;
 }
 export function CustomerAddressForm({
-  allowCountries,
+  allowCountries = [],
   address = {},
   areaId = 'customerAddressForm',
   fieldNamePrefix = 'address'
 }: CustomerAddressFormProps) {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
 
   const getFieldName = (fieldName: string) => {
     return fieldNamePrefix ? `${fieldNamePrefix}.${fieldName}` : fieldName;
@@ -40,13 +40,14 @@ export function CustomerAddressForm({
   return (
     <Area
       id={areaId}
+      className="space-y-3"
       coreComponents={[
         {
           component: {
             default: (
               <NameAndTelephone
-                fullName={address?.fullName}
-                telephone={address?.telephone}
+                fullName={address?.fullName || ''}
+                telephone={address?.telephone || ''}
                 getFieldName={getFieldName}
               />
             )
@@ -60,7 +61,7 @@ export function CustomerAddressForm({
                 name={getFieldName('address_1')}
                 label={_('Address')}
                 placeholder={_('Address')}
-                defaultValue={address?.address1}
+                defaultValue={address?.address1 || ''}
                 required
                 validation={{
                   required: _('Address is required')
@@ -77,7 +78,22 @@ export function CustomerAddressForm({
                 name={getFieldName('address_2')}
                 label={_('Address 2')}
                 placeholder={_('Address 2')}
-                defaultValue={address?.address2}
+                defaultValue={address?.address2 || ''}
+              />
+            )
+          },
+          sortOrder: 30
+        },
+        {
+          component: {
+            default: (
+              <InputField
+                name={getFieldName('city')}
+                label={_('City')}
+                placeholder={_('City')}
+                required
+                validation={{ required: _('City is required') }}
+                defaultValue={address?.city || ''}
               />
             )
           },
@@ -91,6 +107,10 @@ export function CustomerAddressForm({
                 label={_('Country')}
                 name={getFieldName('country')}
                 placeholder={_('Country')}
+                onChange={(value) => {
+                  setValue(getFieldName('country'), value);
+                  setValue(getFieldName('province'), '');
+                }}
                 required
                 validation={{ required: _('Country is required') }}
                 options={allowCountries}
@@ -103,13 +123,14 @@ export function CustomerAddressForm({
           component: {
             default: (
               <ProvinceAndPostcode
+                key={selectedCountry}
                 provinces={
                   allowCountries.find(
                     (country) => country.value === selectedCountry
                   )?.provinces || []
                 }
-                province={address?.province}
-                postcode={address?.postcode}
+                province={address?.province || { code: '' }}
+                postcode={address?.postcode || ''}
                 getFieldName={getFieldName}
               />
             )

@@ -1,11 +1,5 @@
-import React from 'react';
-import { toast } from 'react-toastify';
-import uniqid from 'uniqid';
-import { useQuery } from 'urql';
-import { get } from '../../lib/util/get.js';
-import './ImageUploader.scss';
 import Spinner from '@components/admin/Spinner.js';
-import { ImageUploaderSkeleton } from './ImageUploaderSkeleton.js';
+import { toast } from '@components/common/ui/Sonner.js';
 import {
   DndContext,
   closestCenter,
@@ -22,9 +16,16 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
+import React from 'react';
+import uniqid from 'uniqid';
+import { useQuery } from 'urql';
+import { get } from '../../lib/util/get.js';
+import { ImageUploaderSkeleton } from './ImageUploaderSkeleton.js';
+import './ImageUploader.scss';
 
 export interface Image {
-  id: string;
+  uuid: string;
   url: string;
   path?: string;
 }
@@ -55,7 +56,7 @@ const Upload: React.FC<{
       .then((response) => {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          throw new TypeError('Something wrong. Please try again');
+          throw new TypeError(_('Something wrong. Please try again'));
         }
 
         return response.json();
@@ -64,13 +65,13 @@ const Upload: React.FC<{
         if (!response.error) {
           await onUpload(
             get(response, 'data.files', []).map((i) => ({
-              id: uniqid(),
+              uuid: uniqid(),
               url: i.url,
               path: i.path
             }))
           );
         } else {
-          toast.error(get(response, 'error.message', 'Failed!'));
+          toast.error(get(response, 'error.message', _('Failed!')));
         }
       })
       .catch((error) => {
@@ -85,8 +86,11 @@ const Upload: React.FC<{
   const id = uniqid();
   return (
     <div className="uploader grid-item">
-      <div className="uploader-icon">
-        <label htmlFor={id}>
+      <div className="uploader-icon text-primary w-full h-full">
+        <label
+          htmlFor={id}
+          className="w-full h-full flex items-center justify-center cursor-pointer"
+        >
           {uploading ? (
             <Spinner
               width={isSingleMode ? 40 : 25}
@@ -94,10 +98,6 @@ const Upload: React.FC<{
             />
           ) : (
             <svg
-              style={{
-                width: isSingleMode ? '30px' : '30px',
-                height: isSingleMode ? '30px' : '30px'
-              }}
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5"
               viewBox="0 0 20 20"
@@ -127,14 +127,26 @@ const Image: React.FC<{
   isSingleMode?: boolean;
 }> = ({ image, allowDelete, onDelete, isFirst, isSingleMode }) => {
   const [deleting, setDeleting] = React.useState(false);
+  // Use ref to track if component is mounted
+  const isMounted = React.useRef(true);
+
+  // Set up effect for cleanup
+  React.useEffect(() => {
+    return () => {
+      // When component unmounts, set ref to false
+      isMounted.current = false;
+    };
+  }, []);
 
   // Assign classes based on mode
   const classes = isSingleMode
-    ? 'image'
-    : `image grid-item ${isFirst ? 'first-item' : ''}`;
+    ? 'image border border-border rounded-lg'
+    : `image border border-border rounded-lg grid-item ${
+        isFirst ? 'first-item' : ''
+      }`;
 
   return (
-    <div className={classes} id={image.id}>
+    <div className={classes} id={image.uuid}>
       <div className="img">
         <img src={image.url} alt="" />
       </div>
@@ -142,13 +154,16 @@ const Image: React.FC<{
         <span
           role="button"
           tabIndex={0}
-          className={`remove cursor-pointer text-critical fill-current ${
+          className={`remove cursor-pointer text-destructive fill-current ${
             isSingleMode ? 'single-mode-remove' : ''
           }`}
           onClick={async () => {
             setDeleting(true);
             await onDelete(image);
-            setDeleting(false);
+            // Only update state if component is still mounted
+            if (isMounted.current) {
+              setDeleting(false);
+            }
           }}
           onKeyDown={() => {}}
         >
@@ -188,7 +203,7 @@ const SortableImage: React.FC<{
 }> = (props) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
-      id: props.image.id
+      id: props.image.uuid
     });
 
   const style = {
@@ -259,8 +274,8 @@ const Images: React.FC<ImagesProps> = ({
     const { active, over } = event;
 
     if (active.id !== over?.id && onSortEnd && currentImages) {
-      const oldIndex = currentImages.findIndex((img) => img.id === active.id);
-      const newIndex = currentImages.findIndex((img) => img.id === over?.id);
+      const oldIndex = currentImages.findIndex((img) => img.uuid === active.id);
+      const newIndex = currentImages.findIndex((img) => img.uuid === over?.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
         onSortEnd(oldIndex, newIndex);
@@ -275,7 +290,7 @@ const Images: React.FC<ImagesProps> = ({
       <div className={`single-image-container ${!hasImage ? 'no-image' : ''}`}>
         {hasImage ? (
           <Image
-            key={currentImages[0].id}
+            key={currentImages[0].uuid}
             image={currentImages[0]}
             onDelete={onDelete}
             allowDelete={allowDelete}
@@ -297,10 +312,10 @@ const Images: React.FC<ImagesProps> = ({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={currentImages.map((img) => img.id)}>
+        <SortableContext items={currentImages.map((img) => img.uuid)}>
           {currentImages.map((image, index) => (
             <SortableImage
-              key={image.id}
+              key={image.uuid}
               image={image}
               onDelete={onDelete}
               allowDelete={allowDelete}
@@ -322,7 +337,7 @@ const Images: React.FC<ImagesProps> = ({
     <>
       {(currentImages || []).map((image, index) => (
         <Image
-          key={image.id}
+          key={image.uuid}
           image={image}
           onDelete={onDelete}
           allowDelete={allowDelete}
@@ -350,7 +365,7 @@ export function ImageUploader({
 }: ImageUploaderProps) {
   const [images, setImages] = React.useState<Image[]>(
     currentImages.map((image) => ({
-      id: image.id || uniqid(),
+      uuid: image.uuid,
       url: image.url,
       path: image.path
     }))
@@ -374,15 +389,15 @@ export function ImageUploader({
     }
   };
 
-  const removeImage = (imageId) => {
-    setImages(images.filter((i) => i.id !== imageId));
+  const removeImage = (imageUuid) => {
+    setImages(images.filter((i) => i.uuid !== imageUuid));
   };
 
   const onDeleteFn = async (image: Image) => {
     if (onDelete) {
       await onDelete(image);
     }
-    removeImage(image.id);
+    removeImage(image.uuid);
   };
 
   const onUploadFn = async (imageArray: Image[]) => {
@@ -398,7 +413,12 @@ export function ImageUploader({
   const { data, fetching, error } = result;
 
   if (error) {
-    return <p className="text-critical">There was an error:{error.message}</p>;
+    return (
+      <p className="text-destructive">
+        {_('There was an error:')}
+        {error.message}
+      </p>
+    );
   } else if (fetching) {
     return <ImageUploaderSkeleton itemCount={isMultiple ? 5 : 1} />;
   } else {

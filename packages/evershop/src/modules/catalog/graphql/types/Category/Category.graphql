@@ -6,7 +6,6 @@ type Category {
   uuid: String!
   name: String!
   status: Int!
-  includeInNav: Int!
   showProducts: Int!
   description: JSON
   urlKey: String
@@ -93,7 +92,9 @@ type CategoryCollection {
 
 type PriceRange {
   min: Float!
+  minText: String!
   max: Float!
+  maxText: String!
 }
 
 extend type Product {
@@ -103,4 +104,5 @@ extend type Product {
 extend type Query {
   categories(filters: [FilterInput]): CategoryCollection
   category(id: Int): Category
+  currentCategory: Category
 }

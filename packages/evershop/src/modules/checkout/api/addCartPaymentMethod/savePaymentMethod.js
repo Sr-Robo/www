@@ -1,3 +1,4 @@
+import { translate } from '../../../../lib/locale/translate/translate.js';
 import {
   INTERNAL_SERVER_ERROR,
   INVALID_PAYLOAD,
@@ -15,14 +16,13 @@ export default async (request, response, next) => {
     if (!cart) {
       response.status(INVALID_PAYLOAD).json({
         error: {
-          message: 'Invalid cart',
+          message: translate('Invalid cart'),
           status: INVALID_PAYLOAD
         }
       });
     } else {
       // Save payment method
       await cart.setData('payment_method', method_code);
-      await cart.setData('payment_method_name', method_name);
 
       // Save the cart
       await saveCart(cart);

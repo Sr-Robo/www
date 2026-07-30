@@ -1,3 +1,7 @@
+import { Tooltip } from '@components/common/form/Tooltip.js';
+import { getNestedError } from '@components/common/form/utils/getNestedError.js';
+import { useScopedFieldName } from '@components/common/page-builder/WidgetSettingsScope.js';
+import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React from 'react';
 import {
   useFormContext,
@@ -5,9 +9,6 @@ import {
   FieldPath,
   FieldValues
 } from 'react-hook-form';
-import { _ } from '../../../lib/locale/translate/_.js';
-import { Tooltip } from './Tooltip.js';
-import { getNestedError } from './utils/getNestedError.js';
 
 interface RangeFieldProps<T extends FieldValues = FieldValues>
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name' | 'type'> {
@@ -26,7 +27,7 @@ export function RangeField<T extends FieldValues = FieldValues>({
   name,
   label,
   error,
-  wrapperClassName = 'form-field',
+  wrapperClassName,
   helperText,
   required,
   validation,
@@ -43,10 +44,11 @@ export function RangeField<T extends FieldValues = FieldValues>({
     formState: { errors },
     watch
   } = useFormContext<T>();
+  const resolvedName = useScopedFieldName(name) as FieldPath<T>;
 
-  const fieldError = getNestedError(name, errors, error);
-  const fieldId = `field-${name}`;
-  const value = watch(name) || min;
+  const fieldError = getNestedError(resolvedName, errors, error);
+  const fieldId = `field-${resolvedName}`;
+  const value = watch(resolvedName) || min;
   const { valueAsDate, pattern, ...cleanValidation } = validation || {};
   const validationRules = {
     ...cleanValidation,
@@ -57,11 +59,13 @@ export function RangeField<T extends FieldValues = FieldValues>({
   } as const;
 
   return (
-    <div className={`${wrapperClassName} ${fieldError ? 'error' : ''}`}>
+    <div
+      className={`form-field ${wrapperClassName} ${fieldError ? 'error' : ''}`}
+    >
       {label && (
         <label htmlFor={fieldId}>
           {label}
-          {required && <span className="required-indicator">*</span>}
+          {required && <span className="text-destructive">*</span>}
           {showValue && <span className="range-value">({value})</span>}
           {helperText && <Tooltip content={helperText} position="top" />}
         </label>
@@ -73,7 +77,7 @@ export function RangeField<T extends FieldValues = FieldValues>({
         min={min}
         max={max}
         step={step}
-        {...register(name, validationRules)}
+        {...register(resolvedName, validationRules)}
         className={className}
         aria-invalid={fieldError !== undefined ? 'true' : 'false'}
         aria-describedby={
