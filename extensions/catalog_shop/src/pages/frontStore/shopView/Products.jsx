@@ -5,13 +5,13 @@ import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import './Products.scss';
 
 export default function Products({
-  products: { items }
+  products: { items, total }
 }) {
   return (
     <div>
       <ProductList products={items} countPerRow={3} />
       <span className="product-count italic block mt-5">
-        {_('Showing ${count} products', { count: items.length })}
+        {_('Showing ${count} products', { count: total.toString() })}
       </span>
     </div>
   );
@@ -19,6 +19,7 @@ export default function Products({
 
 Products.propTypes = {
   products: PropTypes.shape({
+    total: PropTypes.number,
     items: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string,
@@ -45,6 +46,7 @@ Products.propTypes = {
 
 Products.defaultProps = {
   products: {
+    total: 0,
     items: []
   }
 };
@@ -57,6 +59,7 @@ export const layout = {
 export const query = `
   query Query($filters: [FilterInput]) {
     products(filters: $filters) {
+      total
       items {
         ...Product
       }
