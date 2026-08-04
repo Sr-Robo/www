@@ -63,7 +63,6 @@ export default function PriceFilter({
 
   return (
     <div className="price-filter">
-      <div className="filter-item-title">{_('Filter by Price')}</div>
       <form onSubmit={onSubmit}>
         <div className="rangeslider">
           <input

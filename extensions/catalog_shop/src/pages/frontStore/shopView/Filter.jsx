@@ -23,7 +23,6 @@ export default function Filter({
     const currentUrl = window.location.href;
     const url = new URL(currentUrl, window.location.origin);
     for (let i = 0; i < currentFilters.length; i += 1) {
-      // Leave the page, limit and sort untouched
       if (
         currentFilters[i].key === 'page' ||
         currentFilters[i].key === 'limit' ||
@@ -63,13 +62,10 @@ export default function Filter({
       }
     }
     url.searchParams.delete('ajax', true);
-
-    // Delete the page. We want to go back to page 1
     url.searchParams.delete('page');
     url.searchParams.append('ajax', true);
     await AppContextDispatch.fetchPageData(url);
     url.searchParams.delete('ajax');
-
     history.pushState(null, '', url);
   };
 
@@ -83,7 +79,7 @@ export default function Filter({
         }`}
       >
         <div className="cpk-shop-filter-heading">
-          <span className="font-bold">{_('SHOP BY')}</span>
+          <span className="font-bold">{_('Filtrar categorias')}</span>
         </div>
         <Area
           id="productFilter"
@@ -101,6 +97,17 @@ export default function Filter({
                 categories
               },
               sortOrder: 10
+            },
+            {
+              component: {
+                default: () => (
+                  <div className="cpk-shop-filter-heading" style={{ marginTop: '1.25rem' }}>
+                    <span className="font-bold">{_('Filtrar por preço')}</span>
+                  </div>
+                )
+              },
+              props: {},
+              sortOrder: 12
             },
             {
               component: { default: PriceFilter },

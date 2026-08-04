@@ -19,20 +19,20 @@
   letter-spacing: 0.06em;
   color: var(--cpk-color-brand);
   text-transform: none;
-}
-
-.filter-item-title {
   margin-bottom: 0.625rem;
   padding-bottom: 0.313rem;
-  border-bottom: 1px solid var(--cpk-color-border);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.8125em;
-  color: var(--cpk-color-contrast-muted);
+  position: relative;
 }
 
-.price-filter .filter-item-title {
-  border-bottom: 0;
+// Efeito igual ao .widgettitle com um chanfro decorativo
+.cpk-shop-filter-heading::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 30px;
+  height: 2px;
+  background-color: var(--cpk-color-brand);
 }
 
 .filter-option-list {

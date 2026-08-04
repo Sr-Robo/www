@@ -2,8 +2,6 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
 
-// Versão própria do CategoryFilter (não reaproveita o do core): adiciona
-// contagem de produtos "(N)" e o efeito glitch no hover, igual à referência.
 export default function CategoryFilter({ currentFilters, categories, updateFilter }) {
   const onChange = (e, categoryId) => {
     e.preventDefault();
@@ -50,9 +48,6 @@ export default function CategoryFilter({ currentFilters, categories, updateFilte
 
   return (
     <div className="category-filter">
-      <div className="filter-item-title">
-        <span className="font-medium">{_('Category')}</span>
-      </div>
       <ul className="filter-option-list">
         {categories.map((c) => {
           const isChecked = currentFilters.find(
