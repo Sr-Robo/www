@@ -24,7 +24,6 @@ export default function Sorting({ products: { total, currentFilters } }) {
 
   return (
     <div className="cpk-shop-toolbar flex justify-between items-center mb-5">
-      {/* woocommerce-result-count */}
       <p className="woocommerce-result-count">
         {total > 0
           ? _('Mostrando ${start}–${end} de ${total} resultados', {
@@ -40,6 +39,7 @@ export default function Sorting({ products: { total, currentFilters } }) {
         method="get"
         action="/shop"
         className="woocommerce-ordering flex items-center gap-2"
+        style={{ marginLeft: 'auto' }}
       >
         {hiddenFilters.map((f) =>
           f.operation === 'eq' ? (
