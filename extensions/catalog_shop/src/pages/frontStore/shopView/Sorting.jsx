@@ -26,12 +26,12 @@ export default function Sorting({ products: { total, currentFilters } }) {
     <div className="cpk-shop-toolbar flex justify-between items-center mb-5">
       <p className="woocommerce-result-count">
         {total > 0
-          ? _('Mostrando ${start}–${end} de ${total} resultados', {
+          ? _('Showing ${start}–${end} of ${total} results', {
               start: start.toString(),
               end: end.toString(),
               total: total.toString()
             })
-          : _('Nenhum resultado encontrado')}
+          : _('No results found')}
       </p>
 
       {/* woocommerce-ordering */}
