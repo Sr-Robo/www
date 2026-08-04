@@ -5,7 +5,7 @@ export default function ShopHeading() {
   return (
     <div className="page-width">
       <div className="mb-2 md:mb-5">
-        <h1 className="cpk-h1">{_('Shop')}</h1>
+        <h1 className="cpk-h1" style={{ color: '#fff' }}>{_('Shop')}</h1>
       </div>
     </div>
   );

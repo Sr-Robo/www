@@ -5,7 +5,8 @@ export default (request, response, next) => {
   setContextValue(request, 'pageInfo', {
     title: translate('Shop'),
     description: translate('Shop'),
-    url: request.url
+    url: request.url,
+    breadcrumbs: []
   });
   next();
 };

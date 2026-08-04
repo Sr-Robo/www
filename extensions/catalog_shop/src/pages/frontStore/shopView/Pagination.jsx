@@ -1,4 +1,7 @@
-import { Pagination } from '@components/frontStore/Pagination.js';
+import {
+  Pagination,
+  DefaultPaginationRenderer
+} from '@components/frontStore/Pagination.js';
 import PropTypes from 'prop-types';
 import React from 'react';
 
@@ -11,9 +14,13 @@ export default function PaginationWrapper({
   return (
     <Pagination
       total={total}
-      limit={parseInt(limit.value, 10)}
-      currentPage={parseInt(page.value, 10)}
-    />
+      limit={limit ? parseInt(limit.value, 10) : 20}
+      currentPage={parseInt(page?.value || '1', 10)}
+    >
+      {(paginationProps) => (
+        <DefaultPaginationRenderer renderProps={paginationProps} />
+      )}
+    </Pagination>
   );
 }
 

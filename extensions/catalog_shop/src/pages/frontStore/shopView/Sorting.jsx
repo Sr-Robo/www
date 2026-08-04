@@ -8,53 +8,76 @@ const options = [
   { code: 'name', name: _('Nome') }
 ];
 
-export default function Sorting({ products: { currentFilters } }) {
+export default function Sorting({ products: { total, currentFilters } }) {
   const currentOb = currentFilters.find((f) => f.key === 'ob');
+  const page = currentFilters.find((f) => f.key === 'page');
+  const limit = currentFilters.find((f) => f.key === 'limit');
   const hiddenFilters = currentFilters.filter(
     (f) => f.key !== 'ob' && f.key !== 'page'
   );
 
+  // Cálculo do intervalo "Mostrando X-Y de Z resultados"
+  const currentPage = parseInt(page?.value || '1', 10);
+  const perPage = parseInt(limit?.value || '20', 10);
+  const start = (currentPage - 1) * perPage + 1;
+  const end = Math.min(currentPage * perPage, total);
+
   return (
-    <form
-      method="get"
-      action="/shop"
-      className="cpk-shop-sorting flex justify-end items-center gap-2 mb-5"
-    >
-      {hiddenFilters.map((f) =>
-        f.operation === 'eq' ? (
-          <input key={f.key} type="hidden" name={f.key} value={f.value} />
-        ) : (
-          <React.Fragment key={f.key}>
-            <input
-              type="hidden"
-              name={`${f.key}[operation]`}
-              value={f.operation}
-            />
-            <input type="hidden" name={`${f.key}[value]`} value={f.value} />
-          </React.Fragment>
-        )
-      )}
-      <label htmlFor="shop-sort-by">{_('Ordenar por')}:</label>
-      <select
-        id="shop-sort-by"
-        name="ob"
-        defaultValue={currentOb ? currentOb.value : ''}
-        className="cpk-input"
-        onChange={(e) => e.target.form.submit()}
+    <div className="cpk-shop-toolbar flex justify-between items-center mb-5">
+      {/* woocommerce-result-count */}
+      <p className="woocommerce-result-count">
+        {total > 0
+          ? _('Mostrando ${start}–${end} de ${total} resultados', {
+              start: start.toString(),
+              end: end.toString(),
+              total: total.toString()
+            })
+          : _('Nenhum resultado encontrado')}
+      </p>
+
+      {/* woocommerce-ordering */}
+      <form
+        method="get"
+        action="/shop"
+        className="woocommerce-ordering flex items-center gap-2"
       >
-        <option value="">{_('Padrão')}</option>
-        {options.map((option) => (
-          <option key={option.code} value={option.code}>
-            {option.name}
-          </option>
-        ))}
-      </select>
-    </form>
+        {hiddenFilters.map((f) =>
+          f.operation === 'eq' ? (
+            <input key={f.key} type="hidden" name={f.key} value={f.value} />
+          ) : (
+            <React.Fragment key={f.key}>
+              <input
+                type="hidden"
+                name={`${f.key}[operation]`}
+                value={f.operation}
+              />
+              <input type="hidden" name={`${f.key}[value]`} value={f.value} />
+            </React.Fragment>
+          )
+        )}
+        <label htmlFor="shop-sort-by">{_('Ordenar por')}:</label>
+        <select
+          id="shop-sort-by"
+          name="ob"
+          defaultValue={currentOb ? currentOb.value : ''}
+          className="cpk-input"
+          onChange={(e) => e.target.form.submit()}
+        >
+          <option value="">{_('Padrão')}</option>
+          {options.map((option) => (
+            <option key={option.code} value={option.code}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+      </form>
+    </div>
   );
 }
 
 Sorting.propTypes = {
   products: PropTypes.shape({
+    total: PropTypes.number,
     currentFilters: PropTypes.arrayOf(
       PropTypes.shape({
         key: PropTypes.string,
@@ -67,6 +90,7 @@ Sorting.propTypes = {
 
 Sorting.defaultProps = {
   products: {
+    total: 0,
     currentFilters: []
   }
 };
@@ -79,6 +103,7 @@ export const layout = {
 export const query = `
   query Query($filters: [FilterInput]) {
     products(filters: $filters) {
+      total
       currentFilters {
         key
         operation

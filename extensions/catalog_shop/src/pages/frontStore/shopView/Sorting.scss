@@ -1,11 +1,27 @@
-.cpk-shop-sorting {
-  label {
+// Toolbar da página /shop: resultado-count à esquerda, formulário de
+// ordenação à direita — espelha a barra do WooCommerce
+// (.woocommerce-result-count + .woocommerce-ordering).
+
+.cpk-shop-toolbar {
+  // Result count (p.woocommerce-result-count)
+  .woocommerce-result-count {
     color: var(--cpk-color-contrast-muted);
     font-size: 0.875em;
+    margin: 0;
   }
 
-  select {
-    width: auto;
-    min-width: 160px;
+  // Formulário de ordenação
+  .woocommerce-ordering {
+    label {
+      color: var(--cpk-color-contrast-muted);
+      font-size: 0.875em;
+      white-space: nowrap;
+    }
+
+    select {
+      width: auto;
+      min-width: 160px;
+      border-radius: 0;
+    }
   }
 }
