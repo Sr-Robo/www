@@ -96,7 +96,7 @@ Sorting.defaultProps = {
 };
 
 export const layout = {
-  areaId: 'rightColumn',
+  areaId: 'leftColumn',
   sortOrder: 15
 };
 

@@ -38,7 +38,7 @@ PaginationWrapper.propTypes = {
 };
 
 export const layout = {
-  areaId: 'rightColumn',
+  areaId: 'leftColumn',
   sortOrder: 30
 };
 

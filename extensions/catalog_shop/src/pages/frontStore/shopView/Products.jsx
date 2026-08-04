@@ -52,7 +52,7 @@ Products.defaultProps = {
 };
 
 export const layout = {
-  areaId: 'rightColumn',
+  areaId: 'leftColumn',
   sortOrder: 25
 };
 

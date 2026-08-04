@@ -218,7 +218,7 @@ Filter.propTypes = {
 };
 
 export const layout = {
-  areaId: 'leftColumn',
+  areaId: 'rightColumn',
   sortOrder: 1
 };
 

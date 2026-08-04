@@ -82,9 +82,9 @@
     margin: 0 auto;
   }
 
-  /* Container — tighter gutter to match the reference (was 22px / 55px). */
+  /* Container — largura aumentada de 1200 → 1320px (alinha com --cpl-container-xl__width da referência). */
   .page-width {
-    max-width: 1200px;
+    max-width: 1320px;
     margin: 0 auto;
     padding: 0 1rem;
     @media screen and (min-width: 1024px) {
