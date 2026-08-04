@@ -2,9 +2,9 @@ import PropTypes from 'prop-types';
 import React, { useMemo, useState } from 'react';
 import Area from '@components/common/Area';
 import { useAppDispatch } from '@components/common/context/app';
-import { AttributeFilter } from './filter/AttributeFilter';
-import { CategoryFilter } from './filter/CategoryFilter';
-import { PriceFilter } from './filter/PriceFilter';
+import AttributeFilter from './filter/AttributeFilter';
+import CategoryFilter from './filter/CategoryFilter';
+import PriceFilter from './filter/PriceFilter';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import './Filter.scss';
 

@@ -4,7 +4,7 @@ import { _ } from '@evershop/evershop/lib/locale/translate/_';
 
 // Versão própria do CategoryFilter (não reaproveita o do core): adiciona
 // contagem de produtos "(N)" e o efeito glitch no hover, igual à referência.
-export function CategoryFilter({ currentFilters, categories, updateFilter }) {
+export default function CategoryFilter({ currentFilters, categories, updateFilter }) {
   const onChange = (e, categoryId) => {
     e.preventDefault();
     const index = currentFilters.findIndex((f) => f.key === 'cat');

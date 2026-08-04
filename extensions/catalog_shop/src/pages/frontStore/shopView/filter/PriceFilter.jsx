@@ -5,7 +5,7 @@ import { _ } from '@evershop/evershop/lib/locale/translate/_';
 // Versão própria do PriceFilter (não reaproveita o do core): a referência
 // exige clique manual em "Filtrar" — o core aplica sozinho com debounce ao
 // arrastar. Mantém o mesmo range duplo (dois <input type=range>).
-export function PriceFilter({
+export default function PriceFilter({
   priceRange: { min: minPrice, max: maxPrice },
   currentFilters,
   updateFilter,

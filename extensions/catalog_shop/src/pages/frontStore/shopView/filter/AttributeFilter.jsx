@@ -4,7 +4,7 @@ import React from 'react';
 // Versão própria do AttributeFilter (não reaproveita o do core): adiciona
 // contagem de produtos "(N)" e o efeito glitch no hover, igual à referência.
 // Título vem do próprio nome do atributo (ex: "Size"), já dinâmico.
-export function AttributeFilter({ currentFilters, availableAttributes, updateFilter }) {
+export default function AttributeFilter({ currentFilters, availableAttributes, updateFilter }) {
   const onChange = (e, attributeCode, optionId) => {
     e.preventDefault();
     const index = currentFilters.findIndex((f) => f.key === attributeCode);
