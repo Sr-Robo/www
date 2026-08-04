@@ -3,7 +3,7 @@ import React from 'react';
 
 export function Header() {
   return (
-    <header className="header bg-background">
+    <header className="header">
       {/* Announcement bar area (Announcement bar widget lands here). */}
       <Area
         id="headerTop"
