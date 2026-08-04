@@ -264,7 +264,7 @@ export function SearchBox({
       <a
         href="#"
         aria-label="Search"
-        className="search__icon inline-flex items-center rounded-md p-2 text-foreground/80 hover:bg-muted hover:text-foreground"
+        className="search__icon inline-flex items-center rounded-md p-2 text-foreground/80 hover:text-foreground transition-colors cursor-pointer cpl-fancybox-toggle"
         onClick={(e) => {
           e.preventDefault();
           setShowing(!showing);
@@ -273,8 +273,19 @@ export function SearchBox({
         {renderSearchIcon ? renderSearchIcon() : defaultSearchIcon()}
       </a>
       {showing && (
-        <div className="search__input__container fixed top-0 left-0 right-0 bottom-0 bg-white shadow-md z-50 p-10">
-          <div className="search__input relative flex justify-between">
+        <div className="search__input__container fixed top-0 left-0 right-0 bottom-0 bg-background/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-10 animate-in fade-in duration-200">
+          <a
+            href="#"
+            className="close-icon absolute top-6 right-6 p-3 text-muted-foreground hover:text-primary transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowing(false);
+              setShowResults(false);
+            }}
+          >
+            {renderCloseIcon ? renderCloseIcon() : defaultCloseIcon()}
+          </a>
+          <div className="search__input relative w-full max-w-4xl">
             {renderSearchInput
               ? renderSearchInput({
                   value: keyword || '',
@@ -282,7 +293,7 @@ export function SearchBox({
                   onKeyDown: handleKeyDown,
                   onFocus: handleFocus,
                   onBlur: handleBlur,
-                  placeholder: _('Search'),
+                  placeholder: _('Type to Search...'),
                   ref: InputRef
                 })
               : defaultSearchInput({
@@ -291,20 +302,9 @@ export function SearchBox({
                   onKeyDown: handleKeyDown,
                   onFocus: handleFocus,
                   onBlur: handleBlur,
-                  placeholder: _('Search'),
+                  placeholder: _('Type to Search...'),
                   ref: InputRef
                 })}
-            <a
-              href="#"
-              className="close-icon flex items-center p-3"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowing(false);
-                setShowResults(false);
-              }}
-            >
-              {renderCloseIcon ? renderCloseIcon() : defaultCloseIcon()}
-            </a>
             {enableAutocomplete &&
               showResults &&
               (renderSearchResults
