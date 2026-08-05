@@ -9,7 +9,7 @@ export default function Products({
 }) {
   return (
     <div>
-      <ProductList products={items} countPerRow={3} />
+      <ProductList products={items} countPerRow={2} />
       <span className="product-count italic block mt-5">
         {_('Showing ${count} products', { count: total.toString() })}
       </span>
