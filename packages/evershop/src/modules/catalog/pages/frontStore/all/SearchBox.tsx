@@ -26,6 +26,7 @@ export default function SearchBox({ searchPageUrl }: SearchBoxProps) {
     <Search
       searchPageUrl={searchPageUrl}
       enableAutocomplete
+      autocompleteDelay={150}
       maxResults={10}
       renderSearchIcon={CustomSearchIcon}
       renderSearchInput={CustomSearchInput}
