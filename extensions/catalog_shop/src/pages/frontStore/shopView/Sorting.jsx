@@ -24,22 +24,11 @@ export default function Sorting({ products: { total, currentFilters } }) {
 
   return (
     <div className="cpk-shop-toolbar flex justify-between items-center mb-5">
-      <p className="woocommerce-result-count">
-        {total > 0
-          ? _('Showing ${start}–${end} of ${total} results', {
-              start: start.toString(),
-              end: end.toString(),
-              total: total.toString()
-            })
-          : _('No results found')}
-      </p>
-
       {/* woocommerce-ordering */}
       <form
         method="get"
         action="/shop"
         className="woocommerce-ordering flex items-center gap-2"
-        style={{ marginLeft: 'auto' }}
       >
         {hiddenFilters.map((f) =>
           f.operation === 'eq' ? (
@@ -71,6 +60,16 @@ export default function Sorting({ products: { total, currentFilters } }) {
           ))}
         </select>
       </form>
+
+      <p className="woocommerce-result-count">
+        {total > 0
+          ? _('Showing ${start}–${end} of ${total} results', {
+              start: start.toString(),
+              end: end.toString(),
+              total: total.toString()
+            })
+          : _('No results found')}
+      </p>
     </div>
   );
 }
