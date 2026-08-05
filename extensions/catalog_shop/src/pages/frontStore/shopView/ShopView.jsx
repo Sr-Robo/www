@@ -7,13 +7,13 @@ import React from 'react';
 export default function ShopView() {
   return (
     <div className="page-width grid grid-cols-1 md:grid-cols-4 gap-8">
-      {/* Conteúdo (produtos + sorting + paginação) — 3/4 da largura, à esquerda */}
-      <div className="md:col-span-3 order-1">
-        <Area id="leftColumn" noOuter />
-      </div>
       {/* Sidebar (filtros) — 1/4 da largura, à direita */}
-      <div className="md:col-span-1 order-2">
+      <div className="md:col-span-1">
         <Area id="rightColumn" noOuter />
+      </div>
+      {/* Conteúdo (produtos + sorting + paginação) — 3/4 da largura, à esquerda */}
+      <div className="md:col-span-3">
+        <Area id="leftColumn" noOuter />
       </div>
     </div>
   );
