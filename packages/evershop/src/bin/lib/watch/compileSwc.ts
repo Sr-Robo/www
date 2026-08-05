@@ -5,6 +5,31 @@ import { execa } from 'execa';
 import { CONSTANTS } from '../../../lib/helpers.js';
 import { error, warning } from '../../../lib/log/logger.js';
 
+// Directory compiles swap distPath via rm+rename (see comment below). Two
+// watch events landing close together for the SAME distPath (e.g. saving
+// two files in src/styles/ a few ms apart) used to race: the second
+// invocation's `rm(tmpDist)` / `rm(distPath)` could delete state the first
+// invocation was still using, and the first invocation's rename would then
+// fail with ENOENT — after its own rm(distPath) had already run, leaving
+// distPath deleted rather than merely stale. Serializing by distPath makes
+// concurrent saves queue instead of interleaving, so the swap for a given
+// directory always completes (or fails) atomically with respect to itself.
+const compileQueues = new Map<string, Promise<unknown>>();
+
+function withDistPathLock<T>(
+  distPath: string,
+  fn: () => Promise<T>
+): Promise<T> {
+  // Chain onto whatever is already queued for this distPath (or run
+  // immediately if nothing is). `.catch(() => {})` on the tracked promise
+  // means a failed compile doesn't wedge the queue for the next caller —
+  // each caller still gets the real result/rejection via `run`.
+  const previous = compileQueues.get(distPath) ?? Promise.resolve();
+  const run = previous.catch(() => {}).then(fn);
+  compileQueues.set(distPath, run.catch(() => {}));
+  return run;
+}
+
 export async function compileSwc(
   srcPath: PathLike,
   distPath: PathLike
@@ -42,23 +67,31 @@ export async function compileSwc(
         // straight into distPath after an upfront delete destroys the previous
         // build whenever the compiler fails (or is missing) — including the
         // files a RUNNING app still lazy-loads from dist.
-        const tmpDist = `${distPath as string}.compiling`;
-        await fsp.rm(tmpDist, { recursive: true, force: true });
-        await execa(
-          'swc',
-          [
-            srcPath as string,
-            '-d',
-            tmpDist,
-            '--config-file',
-            configFile,
-            '--strip-leading-paths',
-            '--copy-files'
-          ],
-          execaOptions
-        );
-        await fsp.rm(distPath as string, { recursive: true, force: true });
-        await fsp.rename(tmpDist, distPath as string);
+        //
+        // The whole temp-compile-then-swap sequence is serialized per distPath
+        // (see withDistPathLock above) — without this, two watch events for
+        // the same directory (e.g. saving two .scss files a few ms apart)
+        // race on tmpDist/distPath and the loser's rename fails with ENOENT
+        // after it has already rm'd distPath, leaving the directory deleted.
+        await withDistPathLock(distPath as string, async () => {
+          const tmpDist = `${distPath as string}.compiling`;
+          await fsp.rm(tmpDist, { recursive: true, force: true });
+          await execa(
+            'swc',
+            [
+              srcPath as string,
+              '-d',
+              tmpDist,
+              '--config-file',
+              configFile,
+              '--strip-leading-paths',
+              '--copy-files'
+            ],
+            execaOptions
+          );
+          await fsp.rm(distPath as string, { recursive: true, force: true });
+          await fsp.rename(tmpDist, distPath as string);
+        });
       } else {
         // Single file: `swc -o` overwrites in place, no pre-delete needed.
         await execa(
