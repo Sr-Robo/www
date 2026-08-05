@@ -12,9 +12,10 @@ const CustomSearchIcon = () => (
   </svg>
 );
 
-const CustomSearchInput = (props: any) => (
+const CustomSearchInput = ({ onChange, ...props }: any) => (
   <input
     type="text"
+    onChange={(e) => onChange(e.target.value)}
     {...props}
     className="cpl-search-input text-2xl md:text-4xl border-b-2 border-border bg-transparent p-4 w-full text-center focus:outline-none focus:border-primary transition-colors"
   />
