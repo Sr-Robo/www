@@ -44,7 +44,6 @@ export default function Sorting({ products: { total, currentFilters } }) {
             </React.Fragment>
           )
         )}
-        <label htmlFor="shop-sort-by">{_('Ordenar por')}:</label>
         <select
           id="shop-sort-by"
           name="ob"
@@ -52,12 +51,9 @@ export default function Sorting({ products: { total, currentFilters } }) {
           className="cpk-input"
           onChange={(e) => e.target.form.submit()}
         >
-          <option value="">{_('Padrão')}</option>
-          {options.map((option) => (
-            <option key={option.code} value={option.code}>
-              {option.name}
-            </option>
-          ))}
+          <option value="">{_('Ordenar por Padrão')}</option>
+          <option value="price">{_('Ordenar por Preço')}</option>
+          <option value="name">{_('Ordenar por Nome')}</option>
         </select>
       </form>
 

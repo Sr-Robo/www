@@ -21,12 +21,10 @@ export default function Sorting({ products: { total, currentFilters } }) {
             hiddenFilters.map((f) => f.operation === 'eq' ? (React.createElement("input", { key: f.key, type: "hidden", name: f.key, value: f.value })) : (React.createElement(React.Fragment, { key: f.key },
                 React.createElement("input", { type: "hidden", name: `${f.key}[operation]`, value: f.operation }),
                 React.createElement("input", { type: "hidden", name: `${f.key}[value]`, value: f.value })))),
-            React.createElement("label", { htmlFor: "shop-sort-by" },
-                _('Ordenar por'),
-                ":"),
             React.createElement("select", { id: "shop-sort-by", name: "ob", defaultValue: currentOb ? currentOb.value : '', className: "cpk-input", onChange: (e) => e.target.form.submit() },
-                React.createElement("option", { value: "" }, _('Padrão')),
-                options.map((option) => (React.createElement("option", { key: option.code, value: option.code }, option.name))))),
+                React.createElement("option", { value: "" }, _('Ordenar por Padrão')),
+                React.createElement("option", { value: "price" }, _('Ordenar por Preço')),
+                React.createElement("option", { value: "name" }, _('Ordenar por Nome')))),
         React.createElement("p", { className: "woocommerce-result-count" }, total > 0
             ? _('Showing ${start}–${end} of ${total} results', {
                 start: start.toString(),
