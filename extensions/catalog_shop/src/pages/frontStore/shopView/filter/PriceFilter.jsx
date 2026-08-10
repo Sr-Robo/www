@@ -61,10 +61,23 @@ export default function PriceFilter({
     currency
   }).format(to);
 
+  // Percentuais de from/to no range, pra pintar a faixa preenchida entre
+  // os dois handles (equivalente ao .ui-slider-range da referência) via
+  // linear-gradient no CSS — ver .rangeslider em components.scss.
+  const range = maxPrice - minPrice;
+  const minPercent = range > 0 ? ((from - minPrice) / range) * 100 : 0;
+  const maxPercent = range > 0 ? ((to - minPrice) / range) * 100 : 100;
+
   return (
     <div className="price-filter">
       <form onSubmit={onSubmit}>
-        <div className="rangeslider">
+        <div
+          className="rangeslider"
+          style={{
+            '--min-percent': `${minPercent}%`,
+            '--max-percent': `${maxPercent}%`
+          }}
+        >
           <input
             className="min"
             type="range"
