@@ -18,12 +18,22 @@ export default function Sorting({ products: { total, currentFilters } }) {
 
   // Cálculo do intervalo "Mostrando X-Y de Z resultados"
   const currentPage = parseInt(page?.value || '1', 10);
-  const perPage = parseInt(limit?.value || '20', 10);
+  const perPage = parseInt(limit?.value || '4', 10);
   const start = (currentPage - 1) * perPage + 1;
   const end = Math.min(currentPage * perPage, total);
 
   return (
     <div className="cpk-shop-toolbar flex justify-between items-center mb-5">
+      <p className="woocommerce-result-count">
+        {total > 0
+          ? _('Mostrando ${start}–${end} de ${total} resultados', {
+              start: start.toString(),
+              end: end.toString(),
+              total: total.toString()
+            })
+          : _('Nenhum resultado encontrado')}
+      </p>
+
       {/* woocommerce-ordering */}
       <form
         method="get"
@@ -56,16 +66,6 @@ export default function Sorting({ products: { total, currentFilters } }) {
           <option value="name">{_('Ordenar por Nome')}</option>
         </select>
       </form>
-
-      <p className="woocommerce-result-count">
-        {total > 0
-          ? _('Showing ${start}–${end} of ${total} results', {
-              start: start.toString(),
-              end: end.toString(),
-              total: total.toString()
-            })
-          : _('No results found')}
-      </p>
     </div>
   );
 }

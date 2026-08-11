@@ -13,10 +13,17 @@ export default function Sorting({ products: { total, currentFilters } }) {
     const hiddenFilters = currentFilters.filter((f) => f.key !== 'ob' && f.key !== 'page');
     // Cálculo do intervalo "Mostrando X-Y de Z resultados"
     const currentPage = parseInt((page === null || page === void 0 ? void 0 : page.value) || '1', 10);
-    const perPage = parseInt((limit === null || limit === void 0 ? void 0 : limit.value) || '20', 10);
+    const perPage = parseInt((limit === null || limit === void 0 ? void 0 : limit.value) || '4', 10);
     const start = (currentPage - 1) * perPage + 1;
     const end = Math.min(currentPage * perPage, total);
     return (React.createElement("div", { className: "cpk-shop-toolbar flex justify-between items-center mb-5" },
+        React.createElement("p", { className: "woocommerce-result-count" }, total > 0
+            ? _('Mostrando ${start}–${end} de ${total} resultados', {
+                start: start.toString(),
+                end: end.toString(),
+                total: total.toString()
+            })
+            : _('Nenhum resultado encontrado')),
         React.createElement("form", { method: "get", action: "/shop", className: "woocommerce-ordering flex items-center gap-2" },
             hiddenFilters.map((f) => f.operation === 'eq' ? (React.createElement("input", { key: f.key, type: "hidden", name: f.key, value: f.value })) : (React.createElement(React.Fragment, { key: f.key },
                 React.createElement("input", { type: "hidden", name: `${f.key}[operation]`, value: f.operation }),
@@ -24,14 +31,7 @@ export default function Sorting({ products: { total, currentFilters } }) {
             React.createElement("select", { id: "shop-sort-by", name: "ob", defaultValue: currentOb ? currentOb.value : '', className: "cpk-input", onChange: (e) => e.target.form.submit() },
                 React.createElement("option", { value: "" }, _('Ordenar por Padrão')),
                 React.createElement("option", { value: "price" }, _('Ordenar por Preço')),
-                React.createElement("option", { value: "name" }, _('Ordenar por Nome')))),
-        React.createElement("p", { className: "woocommerce-result-count" }, total > 0
-            ? _('Showing ${start}–${end} of ${total} results', {
-                start: start.toString(),
-                end: end.toString(),
-                total: total.toString()
-            })
-            : _('No results found'))));
+                React.createElement("option", { value: "name" }, _('Ordenar por Nome'))))));
 }
 Sorting.propTypes = {
     products: PropTypes.shape({
