@@ -14,6 +14,15 @@ export function DefaultMiniCartDropdownSummary({
   checkoutUrl: string;
   totalQty: number;
 }) {
+  // Mesmo tratamento cpk-btn/cpk-glitch do botão "Filtrar"
+  // (extensions/catalog_shop/.../filter/PriceFilter.jsx): precisa do
+  // texto num data-text (glitch de texto lê attr(data-text) via CSS) e do
+  // <span class="cpk-btn-bg"> real como pai do fundo cortado/glitch.
+  const viewCartLabel = _('View Cart (${totalQty})', {
+    totalQty: totalQty.toString()
+  });
+  const checkoutLabel = _('Checkout');
+
   return (
     <>
       <div className="minicart__summary flex justify-between items-center mb-3">
@@ -31,11 +40,11 @@ export function DefaultMiniCartDropdownSummary({
             window.location.href = cartUrl;
           }
         }}
-        className="minicart__viewcart__button w-full "
+        className="minicart__viewcart__button cpk-btn cpk-btn--outline cpk-glitch cpk-glitch-btn w-full"
+        data-text={viewCartLabel}
       >
-        {_('View Cart (${totalQty})', {
-          totalQty: totalQty.toString()
-        })}
+        <span className="cpk-btn-bg" aria-hidden="true" />
+        {viewCartLabel}
       </Button>
       <Area id="miniCartSummaryViewCartButtonAfter" noOuter />
       <Area id="miniCartSummaryCheckoutButtonBefore" noOuter />
@@ -47,9 +56,11 @@ export function DefaultMiniCartDropdownSummary({
             window.location.href = checkoutUrl;
           }
         }}
-        className="minicart__checkout__button w-full "
+        className="minicart__checkout__button cpk-btn cpk-glitch cpk-glitch-btn w-full"
+        data-text={checkoutLabel}
       >
-        {_('Checkout')}
+        <span className="cpk-btn-bg" aria-hidden="true" />
+        {checkoutLabel}
       </Button>
       <Area id="miniCartSummaryCheckoutButtonAfter" noOuter />
     </>
