@@ -139,11 +139,13 @@ function UrlInput({ name }: { name: string }) {
 function ScalarInput({
   field,
   name,
-  isSubField
+  isSubField,
+  initialValue
 }: {
   field: FieldDescriptor;
   name: string;
   isSubField?: boolean;
+  initialValue?: unknown;
 }) {
   const validation = toValidationRules(field, !isSubField);
   // The theme's declared default (appearance.placeholder) renders as the
@@ -161,6 +163,7 @@ function ScalarInput({
           rows={3}
           placeholder={placeholder ?? _('Enter text')}
           validation={validation}
+          defaultValue={initialValue as any}
         />
       );
     case 'integer':
@@ -170,6 +173,7 @@ function ScalarInput({
           allowDecimals={false}
           placeholder={placeholder ?? '0'}
           validation={validation}
+          defaultValue={initialValue as any}
         />
       );
     case 'number':
@@ -179,6 +183,7 @@ function ScalarInput({
           allowDecimals
           placeholder={placeholder ?? '0'}
           validation={validation}
+          defaultValue={initialValue as any}
         />
       );
     case 'boolean':
@@ -197,6 +202,7 @@ function ScalarInput({
           type="text"
           placeholder={placeholder ?? _('Enter text')}
           validation={validation}
+          defaultValue={initialValue as any}
         />
       );
   }
@@ -588,6 +594,7 @@ export function MetafieldValueInput({
         options={options}
         isMulti={!!field.isList}
         required={!isSubField && !!field.required}
+        defaultValue={initialValue as any}
       />
     );
   }
@@ -601,5 +608,5 @@ export function MetafieldValueInput({
     return <ListValueEditor field={field} name={name} />;
   }
 
-  return <ScalarInput field={field} name={name} isSubField={isSubField} />;
+  return <ScalarInput field={field} name={name} isSubField={isSubField} initialValue={initialValue} />;
 }

@@ -203,7 +203,7 @@ function MetafieldRow({
               </button>
             ) : null}
             <div className={open ? '' : 'hidden'}>
-              <MetafieldValueInput field={def} name={name} />
+              <MetafieldValueInput field={def} name={name} initialValue={initialValue} />
               <button
                 type="button"
                 onClick={handleDone}

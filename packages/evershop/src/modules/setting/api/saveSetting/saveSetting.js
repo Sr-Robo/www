@@ -1,7 +1,8 @@
 import {
   commit,
   insertOnUpdate,
-  rollback
+  rollback,
+  startTransaction
 } from '@evershop/postgres-query-builder';
 import { getAvailableLocales } from '../../../../lib/locale/dictionary.js';
 import { normalizeLocale } from '../../../../lib/locale/localeResolution.js';
@@ -51,6 +52,7 @@ export default async (request, response, next) => {
   const { body } = request;
   const { warnings } = validateLanguageSettings(body);
   const connection = await getConnection();
+  await startTransaction(connection);
   try {
     // Loop through the body and insert the data
     const promises = [];

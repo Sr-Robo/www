@@ -40,7 +40,6 @@ RUN mkdir -p config themes extensions public media
 RUN npm install \
   && npm run compile \
   && npm run compile:db \
-  && npm run compile -w admin_ptbr \
   && npm run compile -w catalog_shop \
   && npm run build
 
