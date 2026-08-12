@@ -32,36 +32,38 @@ export function DefaultMiniCartDropdownSummary({
         </span>
       </div>
       <Area id="miniCartSummaryViewCartButtonBefore" noOuter />
-      <Button
-        variant={'outline'}
-        size={'lg'}
-        onClick={() => {
-          if (cartUrl) {
-            window.location.href = cartUrl;
-          }
-        }}
-        className="minicart__viewcart__button cpk-btn cpk-btn--outline cpk-glitch cpk-glitch-btn w-full"
-        data-text={viewCartLabel}
-      >
-        <span className="cpk-btn-bg" aria-hidden="true" />
-        {viewCartLabel}
-      </Button>
-      <Area id="miniCartSummaryViewCartButtonAfter" noOuter />
-      <Area id="miniCartSummaryCheckoutButtonBefore" noOuter />
-      <Button
-        variant={'default'}
-        size={'lg'}
-        onClick={() => {
-          if (checkoutUrl) {
-            window.location.href = checkoutUrl;
-          }
-        }}
-        className="minicart__checkout__button cpk-btn cpk-glitch cpk-glitch-btn w-full"
-        data-text={checkoutLabel}
-      >
-        <span className="cpk-btn-bg" aria-hidden="true" />
-        {checkoutLabel}
-      </Button>
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          variant={'outline'}
+          size={'lg'}
+          onClick={() => {
+            if (cartUrl) {
+              window.location.href = cartUrl;
+            }
+          }}
+          className="minicart__viewcart__button cpk-btn cpk-btn--outline cpk-glitch cpk-glitch-btn w-full"
+          data-text={viewCartLabel}
+        >
+          <span className="cpk-btn-bg" aria-hidden="true" />
+          {viewCartLabel}
+        </Button>
+        <Area id="miniCartSummaryViewCartButtonAfter" noOuter />
+        <Area id="miniCartSummaryCheckoutButtonBefore" noOuter />
+        <Button
+          variant={'default'}
+          size={'lg'}
+          onClick={() => {
+            if (checkoutUrl) {
+              window.location.href = checkoutUrl;
+            }
+          }}
+          className="minicart__checkout__button cpk-btn cpk-glitch cpk-glitch-btn w-full"
+          data-text={checkoutLabel}
+        >
+          <span className="cpk-btn-bg" aria-hidden="true" />
+          {checkoutLabel}
+        </Button>
+      </div>
       <Area id="miniCartSummaryCheckoutButtonAfter" noOuter />
     </>
   );
