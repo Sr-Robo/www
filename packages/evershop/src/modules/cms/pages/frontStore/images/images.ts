@@ -36,6 +36,7 @@ export default async (
     // Send only the buffer data, not the entire result object
     response.send(result.buffer);
   } catch (error) {
+    console.error('[images endpoint error]:', error);
     response.status(404).send('Not Found');
   }
 };
