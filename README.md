@@ -116,3 +116,7 @@ If you are a strategic investor interested in the future of Node.js commerce and
     <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_horizontal_blue.svg" width="201px">
   </a>
 </p>
+
+## License
+
+[GPL-3.0 License](https://github.com/evershopcommerce/evershop/blob/main/LICENSE)
