@@ -89,6 +89,19 @@
   }
 }
 
+// Empilha os filhos do form (range, valores, botão) e joga só o botão pra
+// direita via align-self — não usa text-align pra não arriscar mexer no
+// rangeslider (position: absolute) nem no price-filter-amount (já centralizado).
+.price-filter form {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-filter button.cpk-btn {
+  align-self: flex-end;
+  margin-top: 30px;
+}
+
 // Range de preço (dupla alça) — o EverShop empilha dois <input type=range>
 // via position:absolute; sem isso as duas trilhas ficam uma embaixo da
 // outra em vez de sobrepostas.

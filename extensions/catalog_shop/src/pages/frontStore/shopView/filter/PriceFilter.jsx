@@ -101,10 +101,10 @@ export default function PriceFilter({
         <button
           type="submit"
           className="cpk-btn cpk-btn--outline cpk-glitch cpk-glitch-btn"
-          data-text={_('Filter')}
+          data-text={_('Filtrar')}
         >
           <span className="cpk-btn-bg" aria-hidden="true" />
-          {_('Filter')}
+          {_('Filtrar')}
         </button>
       </form>
     </div>
