@@ -34,7 +34,7 @@ Products.propTypes = {
         }),
         image: PropTypes.shape({
           alt: PropTypes.string,
-          listing: PropTypes.string
+          url: PropTypes.string
         })
       })
     )
@@ -80,7 +80,7 @@ export const fragments = `
     }
     image {
       alt
-      url: listing
+      url
     }
     url
   }
