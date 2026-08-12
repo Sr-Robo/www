@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { select, update } from '@evershop/postgres-query-builder';
 import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { error, success } from '../../lib/log/logger.js';
 import { pool } from '../../lib/postgres/connection.js';
 import { hashPassword } from '../../lib/util/passwordHelper.js';
@@ -9,7 +10,7 @@ function isValidPassword(password) {
   return password.length >= 8;
 }
 
-const { argv } = yargs
+const { argv } = yargs(hideBin(process.argv))
   .option('email', {
     alias: 'e',
     description: 'User email',
