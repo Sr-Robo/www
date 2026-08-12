@@ -31,6 +31,7 @@ export default async (
 
   try {
     const result = await imageProcessor(src, width, quality, format, height);
+    response.status(200);
     response.setHeader('Content-Type', result.metadata.contentType);
     response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     // Send only the buffer data, not the entire result object
