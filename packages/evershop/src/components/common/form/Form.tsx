@@ -103,8 +103,14 @@ export function Form<T extends FieldValues = FieldValues>({
 
   const [canFocus, setCanFocus] = useState(true);
 
-  const onValidationError = () => {
+  const onValidationError = (errors: any) => {
     setCanFocus(true);
+    console.log("DEBUG: Form validation errors:", errors);
+    const errorFields = Object.keys(errors).map(key => {
+      const err = errors[key];
+      return `${key}: ${err?.message || err?.type || 'invalid'}`;
+    }).join(', ');
+    toast.error(`Validation failed: ${errorFields}`);
   };
 
   useEffect(() => {

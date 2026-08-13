@@ -624,7 +624,7 @@ export default function StoreSetting({
                     )}
                     validation={{
                       pattern: {
-                        value: /^G-[A-Z0-9]+$/i,
+                        value: /^$|^G-[A-Z0-9]+$/i,
                         message: _(
                           'Enter a valid GA4 Measurement ID, e.g. G-XXXXXXXXXX'
                         )

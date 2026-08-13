@@ -61,7 +61,7 @@ export function UrlField<T extends FieldValues = FieldValues>({
       required: _('${field} is required', { field: label || name })
     }),
     pattern: validation?.pattern || {
-      value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+      value: /^$|^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
       message: _('Please enter a valid URL')
     }
   };

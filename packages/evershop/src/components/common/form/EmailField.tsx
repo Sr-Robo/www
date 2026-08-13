@@ -59,7 +59,7 @@ export function EmailField<T extends FieldValues = FieldValues>({
         required: _('${field} is required', { field: label || name })
       }),
     pattern: validation?.pattern || {
-      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+      value: /^$|^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
       message: _('Please enter a valid email address')
     }
   };

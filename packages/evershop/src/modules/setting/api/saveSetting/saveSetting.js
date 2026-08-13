@@ -50,6 +50,7 @@ function validateLanguageSettings(body) {
 
 export default async (request, response, next) => {
   const { body } = request;
+  console.log("DEBUG: saveSetting endpoint body:", JSON.stringify(body));
   const { warnings } = validateLanguageSettings(body);
   const connection = await getConnection();
   await startTransaction(connection);
@@ -72,6 +73,10 @@ export default async (request, response, next) => {
               is_json: 1
             })
             .execute(connection, false)
+            .then(res => {
+              console.log(`DEBUG: insertOnUpdate success for ${key}:`, res);
+              return res;
+            })
         );
       } else {
         promises.push(
@@ -82,11 +87,17 @@ export default async (request, response, next) => {
               is_json: 0
             })
             .execute(connection, false)
+            .then(res => {
+              console.log(`DEBUG: insertOnUpdate success for ${key}:`, res);
+              return res;
+            })
         );
       }
     });
     await Promise.all(promises);
+    console.log("DEBUG: Promise.all done, committing...");
     await commit(connection);
+    console.log("DEBUG: Committed successfully");
     // Refresh the setting
     await refreshSetting();
     if (warnings.length > 0) {
@@ -98,6 +109,7 @@ export default async (request, response, next) => {
       warnings
     });
   } catch (error) {
+    console.error("DEBUG: saveSetting failed, rolling back. Error:", error);
     await rollback(connection);
     response.status(INTERNAL_SERVER_ERROR);
     response.json({
