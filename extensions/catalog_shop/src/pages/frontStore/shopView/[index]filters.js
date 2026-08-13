@@ -4,7 +4,7 @@ import { setContextValue } from '@evershop/evershop/graphql/services';
 const DEFAULT_LIMIT = '4';
 
 export default (request, response, next) => {
-  const filters = buildFilterFromUrl(request);
+  const filters = buildFilterFromUrl(request.originalUrl);
 
   // Injetar limit=4 como default quando não vier explícito na URL
   if (!filters.find((f) => f.key === 'limit')) {
