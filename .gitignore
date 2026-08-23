@@ -12,6 +12,7 @@ dist
 !extensions/sendgrid
 !extensions/product_review
 !extensions/catalog_shop
+!extensions/product_discount
 /themes
 .idea/*
 .evershop
@@ -36,7 +37,8 @@ playwright/.cache
 .prettierrc
 mysqlToPostgres.js
 /docs
-extensions
+extensions/*
+!extensions/product_discount
 /specifications
 /wiki
 /design-kit

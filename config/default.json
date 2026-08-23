@@ -17,6 +17,12 @@
         "resolve": "extensions/catalog_shop",
         "enabled": true,
         "priority": 100
+      },
+      {
+        "name": "product_discount",
+        "resolve": "extensions/product_discount",
+        "enabled": true,
+        "priority": 110
       }
     ]
   }

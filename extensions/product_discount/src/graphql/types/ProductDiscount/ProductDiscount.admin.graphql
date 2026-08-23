@@ -1,0 +1,31 @@
+"""
+Represents a percentage discount applied directly to a product (no coupon)
+"""
+type ProductDiscount {
+  productDiscountId: Int
+  uuid: String!
+  status: Int!
+  productId: Int!
+  productName: String
+  productSku: String
+  discountPercent: Float!
+  createdAt: DateTime
+  editUrl: String!
+  updateApi: String!
+  deleteApi: String!
+}
+
+"""
+Returns a collection of product discounts
+"""
+type ProductDiscountCollection {
+  items: [ProductDiscount]
+  currentPage: Int!
+  total: Int!
+  currentFilters: [Filter]
+}
+
+extend type Query {
+  productDiscount(id: Int): ProductDiscount
+  productDiscounts(filters: [FilterInput]): ProductDiscountCollection
+}
