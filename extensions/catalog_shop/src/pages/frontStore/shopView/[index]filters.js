@@ -16,6 +16,20 @@ const DEFAULT_LIMIT = '4';
 // Sorting.jsx marca a opção pelo currentFilters.
 const DEFAULT_SORT_BY = '';
 
+// Ordenação padrão do filtro de categorias na sidebar (pedido do fxlip
+// 2026-08-23). Sem filtro `ob` nenhum, a CategoryCollection cai no default
+// do core (registerDefaultCategoryCollectionFilters.js): category_id DESC,
+// ou seja categoria mais recente primeiro — mesma lógica do produto, só que
+// sem opção equivalente no select (não há dropdown de ordenação de
+// categoria hoje). Valores aceitos pelo core:
+//   'name'   → alfabético A→Z (escolhido como padrão)
+//   'status' → por status
+// Filtro separado do `filters` de produto acima (variável GraphQL própria,
+// $categoryFilters) de propósito: os dois usam a mesma chave `ob`, mas com
+// vocabulários diferentes — reaproveitar o mesmo array acoplaria a ordem
+// das categorias à ordenação de produto escolhida pelo cliente/DEFAULT_SORT_BY.
+const DEFAULT_CATEGORY_SORT_BY = 'name';
+
 export default (request, response, next) => {
   const filters = buildFilterFromUrl(request.originalUrl);
 
@@ -31,5 +45,8 @@ export default (request, response, next) => {
   }
 
   setContextValue(request, 'filtersFromUrl', filters);
+  setContextValue(request, 'categoryFiltersFromUrl', [
+    { key: 'ob', operation: 'eq', value: DEFAULT_CATEGORY_SORT_BY }
+  ]);
   next();
 };

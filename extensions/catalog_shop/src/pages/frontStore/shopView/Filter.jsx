@@ -223,7 +223,7 @@ export const layout = {
 };
 
 export const query = `
-query Query($filters: [FilterInput]) {
+query Query($filters: [FilterInput], $categoryFilters: [FilterInput]) {
   products (filters: $filters) {
     currentFilters {
       key
@@ -246,7 +246,7 @@ query Query($filters: [FilterInput]) {
       max
     }
   }
-  categories {
+  categories(filters: $categoryFilters) {
     items {
       categoryId
       name
@@ -263,5 +263,6 @@ query Query($filters: [FilterInput]) {
 export const useFilterDispatch = () => React.useContext(FilterDispatch);
 export const variables = `
 {
-  filters: getContextValue('filtersFromUrl')
+  filters: getContextValue('filtersFromUrl'),
+  categoryFilters: getContextValue('categoryFiltersFromUrl')
 }`;
