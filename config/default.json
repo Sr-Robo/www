@@ -23,6 +23,12 @@
         "resolve": "extensions/product_discount",
         "enabled": true,
         "priority": 110
+      },
+      {
+        "name": "admin_dark_mode",
+        "resolve": "extensions/admin_dark_mode",
+        "enabled": true,
+        "priority": 120
       }
     ]
   }

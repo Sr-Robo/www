@@ -1,0 +1,336 @@
+/* Cyberpunk Dark Mode Palette & Overrides for EverShop Admin */
+
+:root.dark,
+.dark {
+  /* Cyberpunk Dark Theme Tokens */
+  --background: #121212;
+  --foreground: #f5f5f5;
+  --card: #18181b;
+  --card-foreground: #f5f5f5;
+  --popover: #18181b;
+  --popover-foreground: #f5f5f5;
+
+  /* Brand Colors */
+  --primary: #bd00ff;
+  --primary-foreground: #ffffff;
+
+  /* Neutral / Secondary Surfaces */
+  --secondary: #22222a;
+  --secondary-foreground: #e0e0e0;
+  --muted: #1e1e26;
+  --muted-foreground: #8a8a9a;
+  --accent: #262235;
+  --accent-foreground: #bd00ff;
+
+  /* Semantic / Feedback */
+  --destructive: #ff4d4d;
+  --destructive-foreground: #ffffff;
+  --border: #282836;
+  --divider: #282836;
+  --input: #1a1a22;
+  --ring: #bd00ff;
+
+  /* Sidebar Navigation */
+  --sidebar: #101014;
+  --sidebar-foreground: #e0e0e0;
+  --sidebar-primary: #bd00ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #221c30;
+  --sidebar-accent-foreground: #bd00ff;
+  --sidebar-border: #22222e;
+  --sidebar-ring: #bd00ff;
+
+  /* Charts */
+  --chart-1: #bd00ff;
+  --chart-2: #39adef;
+  --chart-3: #2ecc71;
+  --chart-4: #ee39f1;
+  --chart-5: #ffcc00;
+}
+
+/* Structural Overrides for Dark Mode */
+
+.dark {
+  color-scheme: dark;
+
+  body,
+  body.admin {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  /* Header */
+  .header {
+    background-color: var(--card) !important;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Main Wrapper */
+  .content-wrapper {
+    background-color: var(--background);
+
+    .main-content {
+      background-color: var(--background);
+
+      .main-content-inner {
+        background-color: var(--background);
+      }
+    }
+  }
+
+  /* Sidebar Navigation */
+  .admin-navigation {
+    background-color: var(--sidebar);
+    border-right: 1px solid var(--sidebar-border);
+
+    .root-nav-item,
+    .nav-item {
+      color: var(--sidebar-foreground);
+
+      .root-label {
+        color: var(--muted-foreground);
+        letter-spacing: 0.05em;
+
+        a {
+          color: var(--sidebar-foreground);
+          transition: all 0.2s ease;
+
+          &:hover {
+            color: var(--sidebar-primary);
+          }
+        }
+
+        span {
+          color: inherit;
+        }
+      }
+
+      > a {
+        color: var(--sidebar-foreground);
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: var(--sidebar-accent);
+          color: var(--sidebar-primary);
+        }
+      }
+
+      &.active {
+        &::before {
+          background-color: var(--primary);
+          box-shadow: 0 0 10px rgba(189, 0, 255, 0.7);
+        }
+
+        > a,
+        .root-label a {
+          color: var(--primary);
+          background-color: var(--sidebar-accent);
+        }
+      }
+    }
+
+    .root-nav-item:last-child,
+    li.root-nav-item:last-child {
+      background-color: var(--sidebar) !important;
+      border-top: 1px solid var(--sidebar-border);
+
+      .root-label a {
+        color: var(--sidebar-foreground);
+
+        &:hover {
+          color: var(--sidebar-primary);
+        }
+      }
+
+      &.active,
+      &:hover {
+        background-color: var(--sidebar) !important;
+      }
+    }
+
+    &::-webkit-scrollbar {
+      width: 5px;
+      background-color: var(--sidebar);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #2c2538;
+      outline: 1px solid #2c2538;
+      border-radius: 2px;
+
+      &:hover {
+        background-color: var(--primary);
+      }
+    }
+  }
+
+  /* Specific rule for .root-nav-item:last-child globally in dark mode */
+  .root-nav-item:last-child,
+  li.root-nav-item:last-child {
+    background-color: var(--sidebar) !important;
+    border-top: 1px solid var(--sidebar-border);
+  }
+
+  /* Form Fields & Legacy Admin Inputs */
+  body.admin .form-field {
+    label,
+    fieldset legend {
+      color: var(--foreground);
+    }
+
+    .field-unit,
+    .field-helper,
+    .file-size-hint,
+    .range-value {
+      color: var(--muted-foreground);
+    }
+
+    input[type='text'],
+    input[type='email'],
+    input[type='password'],
+    input[type='number'],
+    input[type='search'],
+    input[type='tel'],
+    input[type='url'],
+    input[type='date'],
+    input[type='time'],
+    input[type='datetime-local'],
+    input[type='color'],
+    input[type='range'],
+    input[type='file'],
+    textarea,
+    select {
+      background-color: var(--input);
+      color: var(--foreground);
+      border-color: var(--border);
+
+      &::placeholder {
+        color: var(--muted-foreground);
+        opacity: 0.6;
+      }
+
+      &:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(189, 0, 255, 0.2), 0 0 10px rgba(189, 0, 255, 0.15);
+      }
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238a8a9a' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+
+      &:focus {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23bd00ff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+      }
+    }
+
+    input[readonly],
+    textarea[readonly],
+    select[readonly],
+    input[disabled],
+    textarea[disabled],
+    select[disabled] {
+      background-color: var(--muted);
+      color: var(--muted-foreground);
+      border-color: var(--border);
+      opacity: 0.7;
+    }
+
+    .react-select__control {
+      background-color: var(--input);
+      border-color: var(--border);
+      color: var(--foreground);
+
+      &--is-focused {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px var(--primary), 0 0 8px rgba(189, 0, 255, 0.2);
+      }
+    }
+
+    .react-select__single-value {
+      color: var(--foreground);
+    }
+
+    .react-select__input input {
+      color: var(--foreground) !important;
+    }
+
+    .react-select__menu {
+      background-color: var(--popover);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .react-select__option {
+      color: var(--foreground);
+
+      &--is-focused {
+        background-color: var(--accent);
+        color: var(--accent-foreground);
+      }
+
+      &--is-selected {
+        background-color: var(--primary);
+        color: var(--primary-foreground);
+      }
+    }
+
+    .react-select__multi-value {
+      background-color: var(--secondary);
+      border: 1px solid var(--border);
+
+      &__label {
+        color: var(--foreground);
+      }
+
+      &__remove {
+        color: var(--muted-foreground);
+        &:hover {
+          background-color: var(--destructive);
+          color: #fff;
+        }
+      }
+    }
+  }
+
+  /* Tables & Grids */
+  table {
+    border-color: var(--border);
+
+    thead th {
+      background-color: var(--card);
+      color: var(--muted-foreground);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr:hover td {
+      background-color: var(--accent);
+    }
+  }
+
+  /* Footer */
+  .footer {
+    border-top: 1px solid var(--divider);
+    color: var(--muted-foreground);
+  }
+
+  /* Global Scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background-color: var(--background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 4px;
+
+    &:hover {
+      background-color: #3d354c;
+    }
+  }
+}

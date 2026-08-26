@@ -13,6 +13,7 @@ dist
 !extensions/product_review
 !extensions/catalog_shop
 !extensions/product_discount
+!extensions/admin_dark_mode
 /themes
 .idea/*
 .evershop
@@ -39,6 +40,8 @@ mysqlToPostgres.js
 /docs
 extensions/*
 !extensions/product_discount
+!extensions/admin_dark_mode
+!extensions/catalog_shop
 /specifications
 /wiki
 /design-kit
