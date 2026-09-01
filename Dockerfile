@@ -43,6 +43,7 @@ RUN npm install \
   && npm run compile -w catalog_shop \
   && npm run compile -w product_discount \
   && npm run compile -w admin_dark_mode \
+  && npm run compile -w order_events \
   && npm run build
 
 # The server listens on $PORT, defaulting to 3000 (bin/lib/normalizePort.js).

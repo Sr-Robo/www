@@ -14,6 +14,7 @@ dist
 !extensions/catalog_shop
 !extensions/product_discount
 !extensions/admin_dark_mode
+!extensions/order_events
 /themes
 .idea/*
 .evershop
@@ -42,6 +43,7 @@ extensions/*
 !extensions/product_discount
 !extensions/admin_dark_mode
 !extensions/catalog_shop
+!extensions/order_events
 /specifications
 /wiki
 /design-kit

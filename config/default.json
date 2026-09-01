@@ -29,6 +29,12 @@
         "resolve": "extensions/admin_dark_mode",
         "enabled": true,
         "priority": 120
+      },
+      {
+        "name": "order_events",
+        "resolve": "extensions/order_events",
+        "enabled": true,
+        "priority": 130
       }
     ]
   }

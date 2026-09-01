@@ -1,0 +1,12 @@
+{
+  "name": "order_events",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Transactional Outbox Publisher para eventos canônicos do EverShop (Fase 1 - F1.4)",
+  "scripts": {
+    "compile": "tsc --project tsconfig.json && copyfiles -u 1 \"src/**/*.{graphql,scss,json}\" dist"
+  },
+  "keywords": [],
+  "author": "Sr. Robo",
+  "license": "ISC"
+}
