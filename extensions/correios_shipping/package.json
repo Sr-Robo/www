@@ -1,0 +1,12 @@
+{
+  "name": "correios_shipping",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Integração de Frete Correios CWS (PAC e SEDEX) via Gateway Sr. Robô",
+  "scripts": {
+    "compile": "tsc --project tsconfig.json && copyfiles -u 1 \"src/**/*.{graphql,scss,json}\" dist"
+  },
+  "keywords": [],
+  "author": "Sr. Robô",
+  "license": "ISC"
+}

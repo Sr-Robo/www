@@ -63,6 +63,11 @@ export default async () => {
             customer_id: order.customer_id ? String(order.customer_id) : undefined,
             email: order.customer_email || 'cliente@robo.net.br',
             full_name: order.customer_full_name || 'Cliente Sr. Robô',
+            tax_id: shippingAddress?.tax_id
+              ? String(shippingAddress.tax_id).replace(/\D/g, '')
+              : billingAddress?.tax_id
+              ? String(billingAddress.tax_id).replace(/\D/g, '')
+              : undefined,
             phone: order.customer_phone || shippingAddress?.telephone || undefined
           },
           shipping_address: {

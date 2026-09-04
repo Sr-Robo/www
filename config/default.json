@@ -35,6 +35,18 @@
         "resolve": "extensions/order_events",
         "enabled": true,
         "priority": 130
+      },
+      {
+        "name": "correios_shipping",
+        "resolve": "extensions/correios_shipping",
+        "enabled": true,
+        "priority": 140
+      },
+      {
+        "name": "checkout_br",
+        "resolve": "extensions/checkout_br",
+        "enabled": true,
+        "priority": 150
       }
     ]
   }

@@ -15,6 +15,8 @@ dist
 !extensions/product_discount
 !extensions/admin_dark_mode
 !extensions/order_events
+!extensions/correios_shipping
+!extensions/checkout_br
 /themes
 .idea/*
 .evershop
@@ -44,6 +46,8 @@ extensions/*
 !extensions/admin_dark_mode
 !extensions/catalog_shop
 !extensions/order_events
+!extensions/correios_shipping
+!extensions/checkout_br
 /specifications
 /wiki
 /design-kit
