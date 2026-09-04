@@ -136,4 +136,57 @@ export default async () => {
     },
     15
   );
+
+  hookAfter(
+    'insertShipment',
+    async function writeOrderShippedOutbox(
+      shipment: any,
+      payload: any,
+      order: any,
+      connection: any
+    ) {
+      try {
+        if (!order || !shipment) {
+          return;
+        }
+
+        const occurredAt = new Date().toISOString();
+        const eventId = uuidv4();
+        const orderNumberStr = String(order.order_number);
+        const trackingCode = String(
+          shipment.tracking_number || payload?.tracking_number || 'SEM-RASTREIO'
+        );
+        const carrierName = String(payload?.carrier || 'custom');
+
+        const outboxPayload = {
+          order_id: String(order.order_id),
+          order_number: orderNumberStr,
+          carrier: carrierName,
+          tracking_code: trackingCode,
+          shipped_at: occurredAt
+        };
+
+        const businessKey = {
+          order_number: orderNumberStr
+        };
+
+        await insert('event_outbox')
+          .given({
+            event_id: eventId,
+            event_type: 'order.shipped',
+            event_version: 1,
+            occurred_at: occurredAt,
+            producer: 'evershop',
+            business_key: JSON.stringify(businessKey),
+            payload: JSON.stringify(outboxPayload),
+            status: 'pending'
+          })
+          .execute(connection);
+      } catch (err) {
+        throw err;
+      }
+    },
+    15
+  );
 };
+
