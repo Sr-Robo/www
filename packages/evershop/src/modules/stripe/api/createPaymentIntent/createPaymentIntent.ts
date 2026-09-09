@@ -20,7 +20,21 @@ export default async (
     .where('uuid', '=', cart_id)
     .load(pool);
 
-  if (!cart) {
+  // Load the order and make sure it belongs to this cart, uses Stripe and
+  // is still pending. Without these checks a client could bind a cheap
+  // cart's PaymentIntent to an expensive order via metadata.order_id.
+  const order = await select()
+    .from('order')
+    .where('uuid', '=', order_id)
+    .load(pool);
+
+  if (
+    !cart ||
+    !order ||
+    order.cart_id !== cart.cart_id ||
+    order.payment_method !== 'stripe' ||
+    order.payment_status !== 'pending'
+  ) {
     response.status(INVALID_PAYLOAD);
     response.json({
       error: {
@@ -41,10 +55,12 @@ export default async (
 
     const stripe = new Stripe(stripeSecretKey);
 
-    // Create a PaymentIntent with the order amount and currency
+    // Create a PaymentIntent with the order amount and currency. Use the
+    // order as the source of truth — the cart row can still be touched by
+    // cart APIs after checkout, the order total cannot.
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: parseInt(smallestUnit(cart.grand_total, cart.currency), 10),
-      currency: cart.currency,
+      amount: parseInt(smallestUnit(order.grand_total, order.currency), 10),
+      currency: order.currency,
       metadata: {
         cart_id,
         order_id

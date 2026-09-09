@@ -6,7 +6,7 @@ import {
   insertOnUpdate
 } from '@evershop/postgres-query-builder';
 import stripePgk from 'stripe';
-import { display } from 'zero-decimal-currencies';
+import smallestUnit, { display } from 'zero-decimal-currencies';
 import { emit } from '../../../../lib/event/emitter.js';
 import { debug, error } from '../../../../lib/log/logger.js';
 import { getConnection } from '../../../../lib/postgres/connection.js';
@@ -66,6 +66,27 @@ export default async (
       .load(connection);
     if (!order) {
       throw new Error(`Order with id ${order_id} not found`);
+    }
+    // Integrity check: the PaymentIntent must match the order's amount and
+    // currency. A signed event only proves Stripe sent it — not that the
+    // intent was created for this order (metadata.order_id is set by the
+    // public createPaymentIntent API from client-provided data).
+    const isPaymentEvent =
+      event.type === 'payment_intent.succeeded' ||
+      event.type === 'payment_intent.amount_capturable_updated';
+    if (isPaymentEvent) {
+      const expectedAmount = parseInt(
+        smallestUnit(order.grand_total, order.currency),
+        10
+      );
+      if (
+        paymentIntent.amount !== expectedAmount ||
+        paymentIntent.currency.toLowerCase() !== order.currency.toLowerCase()
+      ) {
+        throw new Error(
+          `PaymentIntent ${paymentIntent.id} amount/currency mismatch for order ${order_id}: got ${paymentIntent.amount} ${paymentIntent.currency}, expected ${expectedAmount} ${order.currency}`
+        );
+      }
     }
     // Handle the event
     switch (event.type) {
@@ -150,7 +171,15 @@ export default async (
       }
       case 'payment_intent.canceled': {
         debug('payment_intent.canceled event received');
-        await updatePaymentStatus(order.order_id, 'canceled', connection);
+        // Only cancel orders that are still pending/authorized. A late or
+        // re-ordered `canceled` event must not overwrite a captured order.
+        if (['pending', 'stripe_authorized'].includes(order.payment_status)) {
+          await updatePaymentStatus(order.order_id, 'canceled', connection);
+        } else {
+          debug(
+            `Ignoring payment_intent.canceled for order ${order_id} in status ${order.payment_status}`
+          );
+        }
         break;
       }
       default: {
