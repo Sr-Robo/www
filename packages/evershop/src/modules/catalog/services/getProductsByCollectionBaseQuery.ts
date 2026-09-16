@@ -11,5 +11,11 @@ export const getProductsByCollectionBaseQuery = (
     .and('product_collection.collection_id', '=', collectionId);
 
   query.andWhere('product_collection.collection_id', '=', collectionId);
+  // Collections are editorial lists. Preserve the order in which the admin
+  // assigned products instead of silently reverting to newest-first order.
+  // The collection editor can reorder this list by removing and re-adding an
+  // item; the storefront remains deterministic without changing global shop
+  // sorting.
+  query.orderBy('product_collection.product_collection_id', 'ASC');
   return query;
 };

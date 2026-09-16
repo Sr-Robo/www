@@ -22,11 +22,48 @@ export const ProductListItemRender = ({
   showAddToCart?: boolean;
   customAddToCartRenderer?: (product: ProductData) => ReactNode;
 }) => {
+  const badgeValue = (product as ProductData & {
+    metafields?: Array<{
+      namespace?: string;
+      key?: string;
+      value?: unknown;
+    }>;
+  }).metafields?.find(
+    (field) => field.namespace === 'storefront' && field.key === 'badge'
+  )?.value;
+  const badges = Array.isArray(badgeValue)
+    ? badgeValue.filter((value): value is string => typeof value === 'string')
+    : typeof badgeValue === 'string'
+      ? [badgeValue]
+      : [];
+
+  const isSpecial = Boolean(
+    product.price?.special &&
+      product.price?.regular &&
+      product.price.special.value < product.price.regular.value
+  );
+  const visibleBadges = [
+    ...badges,
+    ...(isSpecial ? ['Promoção!'] : [])
+  ].filter((badge, index, all) => badge && all.indexOf(badge) === index);
+
+  const renderBadges = () =>
+    visibleBadges.length > 0 ? (
+      <div className="cpk-product-badge-stack" aria-label="Selos do produto">
+        {visibleBadges.map((badge) => (
+          <span key={badge} className="cpk-badge-sale">
+            {badge}
+          </span>
+        ))}
+      </div>
+    ) : null;
+
   if (layout === 'list') {
     return (
       <div className="product__list__item__inner group relative overflow-hidden flex gap-4 p-4">
-        <div className="product__list__image flex-shrink-0">
+        <div className="product__list__image relative flex-shrink-0">
           <a href={product.url}>
+            {renderBadges()}
             {product.image && (
               <Image
                 src={product.image.url}
@@ -133,7 +170,8 @@ export const ProductListItemRender = ({
   return (
     <div className="product__list__item__inner group overflow-hidden">
       <a href={product.url} className="product__list__link block">
-        <div className="product__list__image overflow-hidden flex w-full justify-center">
+        <div className="product__list__image relative overflow-hidden flex w-full justify-center">
+          {renderBadges()}
           {product.image && (
             <Image
               src={product.image.url}

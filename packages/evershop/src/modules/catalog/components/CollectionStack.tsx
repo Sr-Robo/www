@@ -200,6 +200,12 @@ export const fragments = `
       alt
       url
     }
+    metafields(namespace: "storefront") {
+      namespace
+      key
+      type
+      value
+    }
     url
   }
 `;
