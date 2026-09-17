@@ -198,7 +198,7 @@ export const fragments = `
       alt
       url
     }
-    metafields(namespace: "storefront") {
+    metafields {
       namespace
       key
       type

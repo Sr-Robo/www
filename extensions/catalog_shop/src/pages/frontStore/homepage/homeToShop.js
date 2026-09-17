@@ -1,5 +1,5 @@
 /**
- * Deixa a home core renderizar normalmente.
+ * Redireciona a home ("/") para a listagem de produtos ("/shop").
  *
  * Registrado como middleware da rota core `homepage` — o EverShop anexa
  * middleware a uma rota existente pelo NOME DA PASTA batendo com o routeId
@@ -10,9 +10,9 @@
  * modules/base/pages/frontStore/all/redirect.ts) e derrubaria o bootstrap
  * (`findDublicatedMiddleware.js` lança exceção nesse caso).
  *
- * Este middleware permanece registrado para preservar o ponto de extensão,
- * mas a home agora é controlada pelo Page Builder do EverShop.
+ * A vitrine oficial continua sendo a listagem `/shop`; a home do Page Builder
+ * não é exibida publicamente.
  */
 export default async (request, response, next) => {
-  next();
+  response.redirect(302, '/shop');
 };

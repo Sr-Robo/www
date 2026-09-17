@@ -29,7 +29,9 @@ export const ProductListItemRender = ({
       value?: unknown;
     }>;
   }).metafields?.find(
-    (field) => field.namespace === 'storefront' && field.key === 'badge'
+    (field) =>
+      field.key === 'badge' &&
+      (field.namespace === 'storefront' || field.namespace === 'custom')
   )?.value;
   const badges = Array.isArray(badgeValue)
     ? badgeValue.filter((value): value is string => typeof value === 'string')
