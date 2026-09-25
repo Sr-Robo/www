@@ -1,5 +1,5 @@
 // @ts-ignore Runtime aliases are resolved by EverShop's extension loader.
-import { OK, INVALID_PAYLOAD } from '@evershop/evershop/lib/util/httpStatus.js';
+import { OK, INVALID_PAYLOAD } from '@evershop/evershop/lib/util/httpStatus';
 import { confirmPixPayment } from '../../services/confirmPixPayment.js';
 export default async (request, response) => {
     const { provider_reference, end_to_end_id } = request.body || {};

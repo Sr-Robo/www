@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 // @ts-ignore
 import { pool } from '@evershop/evershop/lib/postgres';
 // @ts-ignore
-import { INVALID_PAYLOAD, OK } from '@evershop/evershop/lib/util/httpStatus.js';
+import { INVALID_PAYLOAD, OK } from '@evershop/evershop/lib/util/httpStatus';
 export default async (request, response) => {
     const { order_id } = request.body || {};
     const order = await select().from('order').where('uuid', '=', order_id).load(pool);
