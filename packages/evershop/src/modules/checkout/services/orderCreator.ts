@@ -158,13 +158,52 @@ async function saveOrderItems(
   orderId: number,
   connection: PoolClient
 ) {
+  // Cart items can carry catalog snapshots (for example `manage_stock` and
+  // inventory quantities) that are useful while rebuilding the cart but do
+  // not belong to the order_item table. Passing the full export through to
+  // the query builder makes PostgreSQL generate an INSERT for those unknown
+  // columns. Keep the order snapshot boundary explicit and stable.
+  const orderItemColumns = new Set([
+    'product_id',
+    'referer',
+    'product_sku',
+    'product_name',
+    'thumbnail',
+    'product_weight',
+    'product_price',
+    'product_price_incl_tax',
+    'qty',
+    'final_price',
+    'final_price_incl_tax',
+    'tax_percent',
+    'tax_amount',
+    'tax_amount_before_discount',
+    'discount_amount',
+    'sub_total',
+    'line_total_with_discount',
+    'total',
+    'line_total_with_discount_incl_tax',
+    'variant_group_id',
+    'variant_options',
+    'product_custom_options',
+    'requested_data',
+    'no_shipping_required',
+    'package_length',
+    'package_width',
+    'package_height',
+    'package_weight'
+  ]);
   // Save order items
   const items = cart.getItems();
   const savedItems = await Promise.all(
     items.map(async (item) => {
+      const exported = item.export();
+      const orderItem = Object.fromEntries(
+        Object.entries(exported).filter(([key]) => orderItemColumns.has(key))
+      );
       await insert('order_item')
         .given({
-          ...item.export(),
+          ...orderItem,
           uuid: uuidv4().replace(/-/g, ''),
           order_item_order_id: orderId
         })
