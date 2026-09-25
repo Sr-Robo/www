@@ -48,6 +48,8 @@ extensions/*
 !extensions/order_events
 !extensions/correios_shipping
 !extensions/checkout_br
+!extensions/pix_payment
+!extensions/pix_payment/**
 /specifications
 /wiki
 /design-kit

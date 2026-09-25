@@ -47,6 +47,12 @@
         "resolve": "extensions/checkout_br",
         "enabled": true,
         "priority": 150
+      },
+      {
+        "name": "pix_payment",
+        "resolve": "extensions/pix_payment",
+        "enabled": true,
+        "priority": 160
       }
     ]
   }
