@@ -59,19 +59,60 @@ jobs:
       - name: Push da branch de sync
         run: git push origin "${{ steps.sync.outputs.branch }}" --force
 
-      - name: Abrir PR
-        uses: peter-evans/create-pull-request@v6
+      - name: Abrir ou atualizar PR
+        uses: actions/github-script@v7
+        env:
+          SYNC_BRANCH: ${{ steps.sync.outputs.branch }}
+          SYNC_CONFLICT: ${{ steps.sync.outputs.conflict }}
         with:
-          branch: ${{ steps.sync.outputs.branch }}
-          base: dev
-          title: "Sync com upstream evershopcommerce/evershop"
-          body: |
-            PR automático de sincronização diária com o repositório oficial
-            (`evershopcommerce/evershop`, branch `main`).
+          github-token: ${{ github.token }}
+          script: |
+            const { owner, repo } = context.repo;
+            const head = `${owner}:${process.env.SYNC_BRANCH}`;
+            const title = 'Sync com upstream evershopcommerce/evershop';
+            const body = `PR automático de sincronização diária com o repositório oficial
+            (\`evershopcommerce/evershop\`, branch \`main\`).
 
-            Conflitos detectados: **${{ steps.sync.outputs.conflict }}**
+            Conflitos detectados: **${process.env.SYNC_CONFLICT}**
 
-            Se houver conflitos, os marcadores (`<<<<<<<`) estão commitados nesta
+            Se houver conflitos, os marcadores (\`<<<<<<<\`) estão commitados nesta
             branch — resolva localmente antes de aprovar o merge. Nunca é feito
-            merge automático direto em `dev`.
-          labels: upstream-sync
+            merge automático direto em \`dev\`.`;
+
+            const { data: openPullRequests } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              base: 'dev',
+              head
+            });
+
+            let pullRequest;
+            if (openPullRequests.length > 0) {
+              const { data } = await github.rest.pulls.update({
+                owner,
+                repo,
+                pull_number: openPullRequests[0].number,
+                title,
+                body
+              });
+              pullRequest = data;
+            } else {
+              const { data } = await github.rest.pulls.create({
+                owner,
+                repo,
+                title,
+                head: process.env.SYNC_BRANCH,
+                base: 'dev',
+                body
+              });
+              pullRequest = data;
+            }
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pullRequest.number,
+              labels: ['upstream-sync']
+            });
+            core.info(`PR #${pullRequest.number}: ${pullRequest.html_url}`);
