@@ -65,7 +65,10 @@ jobs:
           SYNC_BRANCH: ${{ steps.sync.outputs.branch }}
           SYNC_CONFLICT: ${{ steps.sync.outputs.conflict }}
         with:
-          github-token: ${{ github.token }}
+          # The organization disables PR creation by GITHUB_TOKEN. This
+          # repo-scoped secret is used only for the PR API; branch pushes still
+          # use the workflow token from actions/checkout.
+          github-token: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
           script: |
             const { owner, repo } = context.repo;
             const head = `${owner}:${process.env.SYNC_BRANCH}`;
