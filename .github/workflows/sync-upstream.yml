@@ -35,6 +35,7 @@ jobs:
         run: |
           BRANCH="upstream-sync-$(date -u +%Y-%m-%d)"
           git checkout -b "$BRANCH"
+          SYNC_BASE=$(git rev-parse HEAD)
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           if git merge upstream/main --no-edit; then
             echo "conflict=false" >> "$GITHUB_OUTPUT"
@@ -43,6 +44,16 @@ jobs:
             # Comita o estado com marcadores de conflito para revisão manual no PR.
             git add -A
             git commit -m "sync upstream/main (conflitos pendentes de resolução manual)" --no-verify
+          fi
+
+          # GitHub blocks GITHUB_TOKEN from updating workflow files. These
+          # Actions workflows belong to this fork (release.yml targets our
+          # release process), so keep the versions from dev in the sync PR.
+          git restore --source="$SYNC_BASE" --staged --worktree -- .github/workflows/
+          git clean -fd -- .github/workflows/
+          git add -A -- .github/workflows/
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: preserve fork-owned GitHub Actions workflows"
           fi
 
       - name: Push da branch de sync
