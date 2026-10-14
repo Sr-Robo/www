@@ -1,4 +1,4 @@
-import ProductList from '@components/frontStore/catalog/product/list/List.jsx';
+import { ProductList } from '@components/frontStore/catalog/ProductList';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
@@ -9,7 +9,7 @@ export default function Products({
 }) {
   return (
     <div>
-      <ProductList products={items} countPerRow={2} />
+      <ProductList products={items} gridColumns={2} />
     </div>
   );
 }
