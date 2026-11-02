@@ -15,20 +15,20 @@ export function Header() {
           px-4/px-6 dão o respiro lateral sem limitar com page-width. */}
       <div className="header__middle w-full flex items-center gap-6 py-4 px-4 lg:px-6">
         <Area
-          id="headerMiddleCenter"
-          className="header__middle__center flex shrink-0 items-center"
+          id="headerMiddleLeft"
+          className="header__middle__left flex justify-start items-center"
           isGlobal
           editableInPageBuilder
         />
         <Area
-          id="headerMiddleLeft"
-          className="header__middle__left flex items-center order-first md:order-none"
+          id="headerMiddleCenter"
+          className="header__middle__center flex justify-center items-center"
           isGlobal
           editableInPageBuilder
         />
         <Area
           id="headerMiddleRight"
-          className="header__middle__right ml-auto flex items-center gap-1"
+          className="header__middle__right flex justify-end items-center gap-3"
           isGlobal
           editableInPageBuilder
         />
