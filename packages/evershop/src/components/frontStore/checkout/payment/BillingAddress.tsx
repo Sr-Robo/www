@@ -14,11 +14,9 @@ import {
   useCheckoutDispatch
 } from '@components/frontStore/checkout/CheckoutContext.js';
 import CustomerAddressForm from '@components/frontStore/customer/address/addressForm/Index.js';
+import { serverAddressErrors } from '@components/frontStore/customer/address/addressFormLogic.js';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
-import {
-  Address,
-  CustomerAddressGraphql
-} from '@evershop/evershop/types/customerAddress';
+import { Address, AddressGraphql } from '@evershop/evershop/types/address';
 import React, { useEffect, useState } from 'react';
 import { useWatch } from 'react-hook-form';
 
@@ -28,7 +26,7 @@ export function BillingAddress({
   addingBillingAddress,
   noShippingRequired
 }: {
-  billingAddress?: CustomerAddressGraphql;
+  billingAddress?: AddressGraphql;
   addBillingAddress?: (address: Address) => Promise<void>;
   addingBillingAddress?: boolean;
   noShippingRequired: boolean;
@@ -36,7 +34,6 @@ export function BillingAddress({
   const { form, checkoutData } = useCheckout();
   const { updateCheckoutData } = useCheckoutDispatch();
   const {
-    setValue,
     getValues,
     trigger,
     formState: { disabled }
@@ -54,11 +51,15 @@ export function BillingAddress({
 
   const [useSameAddress, setUseSameAddress] = useState(!noShippingRequired);
 
+  // The billing form fills itself: `CustomerAddressForm` maps a stored
+  // address (the GraphQL shape) to its field ids with `initialValuesFor`.
+  // Writing `billingAddress` into the form here put that shape in raw —
+  // `locality` and `country` as objects, `addressLine1`-style keys no field
+  // reads — so a saved address came back as City "[object Object]" and an
+  // empty Country, and saving it again failed with unknown address fields.
   useEffect(() => {
     if (useSameAddress && shippingAddress) {
       updateCheckoutData({ billingAddress: shippingAddress });
-    } else if (!useSameAddress) {
-      setValue('billingAddress', billingAddress);
     }
   }, [useSameAddress, checkoutData.shippingAddress]);
 
@@ -87,7 +88,15 @@ export function BillingAddress({
 
     if (isValid && addBillingAddress) {
       const billingAddressData = getValues('billingAddress');
-      await addBillingAddress(billingAddressData);
+      try {
+        await addBillingAddress(billingAddressData);
+      } catch (error) {
+        // Field-targeted errors from the server land on the inputs (spec § 3.8).
+        serverAddressErrors(error, 'billingAddress', (name, err) =>
+          form.setError(name, err)
+        );
+        throw error;
+      }
     }
   };
 
@@ -163,13 +172,15 @@ export function BillingAddress({
                       </label>
                     </ItemTitle>
 
+                    {/* ItemDescription clamps its text to two lines; a form
+                        inside it must not be clamped, or the address preview
+                        is cut short and the button below covers it (#1175). */}
                     {!useSameAddress && (
-                      <ItemDescription className="text-inherit mt-3 overflow-visible">
-                        <div className="text-inherit bg-white">
+                      <ItemDescription className="text-inherit mt-3 line-clamp-none">
+                        <div className="text-inherit">
                           <CustomerAddressForm
-                            areaId="checkoutBillingAddressForm"
-                            fieldNamePrefix="billingAddress"
-                            countryScope="all"
+                            surface="billing"
+                            namePrefix="billingAddress"
                             address={undefined} // Always start empty for different address
                           />
                           {noShippingRequired && (
@@ -188,13 +199,14 @@ export function BillingAddress({
                 </Item>
               </>
             ) : (
-              <ItemDescription className="text-inherit mt-3 overflow-visible">
-                <div className="text-inherit bg-white">
+              <ItemDescription className="text-inherit mt-3 line-clamp-none">
+                <div className="text-inherit">
+                  {/* No shipping: the billing address is the only address,
+                      so the one already saved on the cart is shown. */}
                   <CustomerAddressForm
-                    areaId="checkoutBillingAddressForm"
-                    fieldNamePrefix="billingAddress"
-                    countryScope="all"
-                    address={undefined} // Always start empty for different address
+                    surface="billing"
+                    namePrefix="billingAddress"
+                    address={billingAddress}
                   />
                   {noShippingRequired && (
                     <Button
