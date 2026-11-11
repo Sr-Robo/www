@@ -1,3 +1,316 @@
+# v2.4.0 (2026-11-09)
+
+A feature release on top of v2.3.0: CSV import for categories, products, customers and addresses; browser commerce events with Google Analytics 4 ecommerce tracking; cart recovery links for abandoned-cart emails; one way to mark an order placed; and several security fixes.
+
+This release has **15 new database migrations** and a few changes in behaviour. Please read **Breaking Changes**, **Behaviour Changes** and **Upgrade Notes** before upgrading.
+
+## Highlights
+
+* **CSV import** — a new `import` module: import categories, products, customers and customer addresses from CSV files in Admin → Import. Every file is checked before anything is written.
+* **Commerce events and GA4** — the storefront publishes shopping events in the browser for analytics and pixels, and the built-in Google Analytics 4 now sends ecommerce events, with Google Consent Mode.
+* **Cart recovery** — a signed link that gives a saved cart back to a shopper in any browser, a `cart_email_added` event, and abandoned payments (PayPal, Stripe) that give the cart back.
+* **Orders placed once** — `markOrderPlaced` sets the new `order.placed_at` and emits `order_placed` exactly once per order, for every payment method.
+* **Helpers for extensions** — social login without a password, product, asset and image URL helpers, and `buildUrl` in subscribers and cron jobs.
+
+## Breaking Changes
+
+* **`order_placed` payload.** Every `order_placed` payload is now the committed order row, with `placed_at`. Cash on Delivery's payload has no `insertId` any more. An extension that emits `order_placed` itself still works (core does not emit it a second time), but its orders keep `placed_at` empty; use `markOrderPlaced` instead.
+* **`OrderItem.productUrl`** returns the product's store page in both GraphQL schemas. It used to return the admin edit page. Code that used it as an admin link should use `buildUrl('productEdit', { id })`.
+
+## Behaviour Changes
+
+### For store owners
+
+* **Stripe: unpaid orders are cancelled after 1 hour.** A new cron job cancels Stripe orders that stay unpaid (for example a 3-D Secure check that was left open), restocks them and gives the cart back. See Upgrade Notes.
+* **No cancellation email for an order that was never placed.** This includes abandoned PayPal orders, which used to get one after 6 hours. The admin still sees the cancellation.
+* **Footer.** While you have not set your own copyright (the shop's **Copyright** custom field), the storefront and admin footers show "Powered by EverShop" after the copyright line. The default copyright is now `© <year> <store name>` (no "All Rights Reserved"), and the card icons (Visa, Mastercard, PayPal) are removed from the storefront footer.
+* **"Allow guest checkout"** moved from Store Settings to Settings → Customer → Checkout. The saved value is kept.
+* **Customer emails are matched in any letter case** for forgot password, sign-up and profile update, as login already did. Sign-up refuses an email that exists in another letter case.
+* **GA4 loads earlier.** The GA4 script is now server-rendered in `<head>`, before an `async` cookie banner. See Upgrade Notes.
+
+### For developers, themes and integrations
+
+* **Cart routes answer 404 for an unknown cart.** The 11 public routes with `:cart_id` in their path answer **404** for an unknown, inactive or malformed cart id, instead of 500.
+* **Public customer routes ignore store-only fields.** `POST /api/customers` (sign-up) and `PATCH /api/customers/me` remove `group_id`, `status`, `meta_data`, `customer_id`, `uuid`, `created_at` and `updated_at` from the body. A logged-in admin can still send every field on create. The create response no longer contains the password hash.
+* **Partial updates no longer write defaults.** `updateProduct`, `updateCategory`, `updateCoupon`, `updatePage` and the REST update routes write only the fields they receive. The `updateAttributeGroups` hook no longer runs for an attribute payload without `groups`, and receives `[]` instead of `[100000]`.
+* **`inventory_updated` fires only when the stock really changes**, and carries `product_id`, `product_uuid` and `sku` next to `old` and `new`.
+* **`updated_at` is refreshed on every update** of 19 core tables (`product`, `category`, `collection`, `customer`, `cart`, `order`, `shipment`, `coupon`, `cms_page`, `blog_post` and others). Webhook payloads, GraphQL `updatedAt` and the sitemap `<lastmod>` now show the real update time. Existing rows keep their creation time until their next update.
+* **Customer events no longer carry the password hash** (`customer_registered`, `account_created`, `customer_created`, `customer_updated`, `customer_deleted`).
+* **Footer in themes.** A theme that overrides `Footer` shows no "Powered by EverShop" unless it renders `PoweredByEverShop`.
+* **`evershop seed` keeps the store's mode.** It no longer forces `NODE_ENV=development`. With `NODE_ENV` not set, a local extension must have `dist/` (run `build` once).
+* **`CartContext.addContactInfo`** no longer refetches the cart, sets `loadingStates.addingContactInfo` or sets the cart `error`. The caller still gets the error.
+
+## New Features
+
+### CSV import (new `import` core module)
+
+* **Admin → Import**: import categories, products, customers and customer addresses. Each type has a template to download (the header, two example rows, and one `attr:` column for each attribute and one `metafield:` column for each custom field of the store).
+* **Checked before written.** The file is checked for what the rows say, then against the store. Every problem is listed with its row, column and message; **Download file with errors** returns the file with an `_errors` column. The file is checked once more just before the import writes anything.
+* **Background worker.** The import runs in its own process, started from the event process. The page shows the progress. **Cancel** stops between two rows, and **Resume** continues after a stop (10 failed rows) or a server restart. One import runs at a time; finished imports are kept 7 days.
+* **Same rules as the admin.** Rows are written through the same services as the admin forms, so imported records follow the same rules and fire the same events (webhooks, search indexing, page addresses). The import slows down when the event queue is long, so the storefront stays fast.
+* **Products**: variant groups (`variant_group`, `variant_axes`), images by URL (downloaded once, checked to be an image, stored in the configured storage, behind the SSRF guard), custom fields, and `redirect_from` for permanent (301) redirects from old paths.
+* **Customers**: a bcrypt `password_hash` is kept as given; a customer without a password uses "Forgot your password?". The import sends no welcome email. **Addresses** follow the Address Format Registry of each country.
+* Messages are shown in the store language, in all 17 languages (`translations/<locale>/import.csv`).
+* Limits and settings under `system.import` (default 100 MB and 200,000 rows per file). In our tests, 50,000 simple products took about 10 minutes on a fast laptop.
+* REST API under `/api/import-jobs` and `/api/import-templates/:entity` (admin only). Calls that change an import must send `X-Import-Request: 1`.
+
+Core services that came with the import, and are useful without it:
+
+* **301 redirects.** `url_redirect` has a `status_code` (301 or 302, default 302). `recordRedirect` takes `statusCode` and `source`. Existing redirects stay 302.
+* **`createCustomer` options** in the call context: `passwordHash` (store a bcrypt hash as given), `allowNoPassword`, and `suppressRegistrationEvent` (no `customer_registered` / `account_created`, so no welcome email).
+* **`createVariantGroup` and `addVariantItem`** services, exported from `@evershop/evershop/catalog/services`.
+* **`importOrder`** (`@evershop/evershop/oms/services`) writes an order that already happened, without taking stock again and without firing `order_created`. No CSV type uses it yet.
+* **Database timeouts per process**: `DB_LOCK_TIMEOUT_MS` and `DB_STATEMENT_TIMEOUT_MS`. Unset means no change.
+
+### Commerce events and Google Analytics 4
+
+* **Browser commerce events** for analytics and marketing scripts: `product_viewed`, `product_added_to_cart`, `product_removed_from_cart`, `cart_viewed`, `checkout_started`, `checkout_contact_info_submitted`, `coupon_applied`, `coupon_removed`, `checkout_shipping_info_submitted`, `payment_info_submitted` and `checkout_completed`. Listen with `onCommerceEvent` from `@evershop/evershop/components/common/commerceEvents`, or `window.evershop.onCommerceEvent` from a script outside the bundle. Listeners run in background tasks, so a slow pixel does not slow the page (INP, Interaction to Next Paint). A listener that subscribes late gets the page's last 50 events. These are browser events: treat their amounts as untrusted. The server's `order_placed` stays the record of a sale.
+* **Google Analytics 4** (Store Setting → Analytics): besides the page views, it now sends `view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `add_shipping_info`, `add_payment_info` and `purchase` (once per order), with item categories and coupons. A new **Cookie consent** setting turns on Google Consent Mode (no cookies until the shopper accepts). The form refuses a `GTM-…` ID.
+* **Guest email saved at checkout.** The checkout saves a guest's email to the cart as soon as it is entered, so a server job can find carts with an email that went idle.
+* GraphQL: `Order.placedAt`, `CartItem.category` and `OrderItem.category`.
+
+### Cart recovery and abandoned payments
+
+* **Cart recovery link.** `buildCartRecoveryUrl(cartId)` (`@evershop/evershop/checkout/services`) returns a signed `/cart/recover/<token>` link, valid `checkout.cartRecovery.ttlDays` (default 30). It needs the new `CART_RECOVERY_TOKEN_SECRET` env var. Opening the link changes nothing (email scanners open every link); the **Restore my cart** button copies the products into the visitor's cart, with stock and prices checked. A link works once. A customer's cart needs that customer signed in.
+* **`cart_email_added` event** and webhook topic (new "Carts" group): an open cart gets an email, or its email changes. Not fired during an import.
+* **Abandoned payments give the cart back.** `cancelAbandonedOrder(orderUuid, reason)` (`@evershop/evershop/oms/services`) cancels and restocks the order, then reopens its cart when no order from it was ever placed. PayPal's reconciliation uses it.
+* **Stripe reconciliation.** A new cron job (every 15 minutes) reads the live state of each unpaid Stripe order's PaymentIntents. A paid intent whose webhook was lost is recorded and the order placed. Otherwise, after 1 hour, the intents are cancelled at Stripe and the order is cancelled with `cancelAbandonedOrder`. A payment still `processing` waits. Settings: `system.stripe.abandonedOrderTtlHours`, `reconcileSchedule`, `reconcileEnabled`.
+
+### Orders, inventory and data
+
+* **`markOrderPlaced(orderId, connection?)`** (`@evershop/evershop/oms/services`): sets `order.placed_at` and emits `order_placed`, once per order. Cash on Delivery, the zero-total checkout, Stripe and PayPal use it. Existing orders get `placed_at` from the migration.
+* **`product_back_in_stock` event** and webhook topic: a product goes from out of stock to in stock, by any path (admin, order cancellation, import, SQL).
+* **`addUpdatedAtTrigger`** (`@evershop/evershop/lib/postgres/updatedAtTrigger`) adds the same `updated_at` trigger to an extension's own table.
+
+### Customer accounts and social login
+
+* **Sign in without a password**, for social logins and headless storefronts: `request.loginCustomer(customerId, callback?)`, `getCustomerByEmail(email)` and `issueCustomerTokens(customerId)` (`@evershop/evershop/customer/services`). They give the same session and token payload as the password login, for active customers only.
+* **`protectedCustomerFields` registry value**: an extension can protect its own customer columns from the public sign-up and profile routes (add-only).
+
+### URL helpers
+
+* **`getProductUrl` / `getProductUrls`** (`@evershop/evershop/catalog/services`): a product's storefront URL, the same one the storefront shows.
+* **`getAssetUrl` / `getImageUrl`** (`@evershop/evershop/lib/util/*`): the absolute URL of a stored file, or of a resized image through `/images`, for any storage provider.
+* **`buildUrl` works in the event and cron processes**, which now load the routes. `buildAbsoluteUrl(routeId, params, query?)` takes an optional `query` argument.
+
+## Security
+
+* **Login and other forms could send their fields in the URL** (GHSA-cfwv-hv27-hfhp). A form submitted before the page script loaded was sent by the browser as a GET, so the admin and shopper sign-in put the email and password in the URL (browser history, access logs, `Referer`). Forms now render with `method="post"` and no native action.
+* **Public sign-up could set store-only fields.** An anonymous caller of `POST /api/customers` could choose their customer group (and with it group prices, taxes and promotions), their status and admin-only custom fields. The response also returned the password hash.
+* **Signing out handed the cart to the next person on the browser.** The next customer to sign in, or a guest, got the previous customer's cart, including the billing name, phone and address at checkout.
+* **Customer events carried the password hash** to every subscriber; a password change sent the new hash.
+* **SSRF guard**: a webhook URL whose address is a NAT64 (`64:ff9b::/96`) or 6to4 (`2002::/16`) form of a private IPv4 address is now refused, and IPv4-mapped addresses are recognised in every text form. Image downloads of the import use the same guard.
+
+## Bug Fixes
+
+* Partial updates from REST, scripts and extensions no longer reset fields they leave out (#1103): a product's description, tax class and category, a category's parent (the category moved to the top level), a coupon's dates, and a CMS page's content. An attribute saved with no group no longer gets a group that does not exist.
+* A product update that changes only the `url_key`, the name or the stock now fires `product_updated`, so the URL rewrite follows the new `url_key`. Before, the new URL returned 404.
+* Checkout: a billing address saved on the cart comes back filled in after a reload, instead of "[object Object]". A digital cart could not be paid after a reload.
+* Checkout: the billing address preview and payment method forms are no longer covered by "Continue to payment" (#1175).
+* The mini cart no longer shows the old contents after adding an item: the cart helpers now resolve once the new cart has arrived.
+* `order_placed` (and with it the confirmation email) is sent once per order: PayPal finalizations running at the same time (#1180), an authorization followed by a capture, and a zero-total checkout run twice each sent it twice.
+* `order_placed` from Cash on Delivery and Stripe carried a stale order (`pending`, `processing`) instead of the committed one.
+* Cron jobs now see settings saved after the server started (for example new PayPal credentials and the sitemap's store languages).
+* `evershop seed` works with themes and extensions that ship only `dist/`, and reads `config/production.json` on a production server.
+* Forgot password works when the email is typed in another letter case; sign-up and profile update can no longer create two accounts that differ only by case; `_` in an email no longer matches any character at login.
+* `customer_registered` and `account_created` are saved in the customer's transaction: subscribers always find the customer, and a rolled-back sign-up sends no welcome email.
+* The product link of an order item no longer sends shoppers to the admin edit page (success page and order page).
+* The social sharing image of a blog post and the order email thumbnails no longer break on an uppercase scheme (`HTTPS://`) or a path without a leading slash.
+* Adding a product to a variant group no longer leaks a database connection when it is refused.
+
+## Developer Experience
+
+* `CartContext.syncCartWithServer` resolves with the new cart.
+* `SelectField` takes a `description` prop.
+* The event, cron and import processes boot through one shared `headlessBoot`; `BootstrapContext.process` can be `'import'`.
+* CI: a PostgreSQL service for the database tests, end-to-end workflows for the import (and a nightly one with 50,000 rows), and runners pinned to `ubuntu-24.04`.
+* Release: the Docker job waits up to 20 minutes for the new version to be installable from npm.
+
+## Dependencies
+
+* No dependency changes.
+
+## Upgrade Notes
+
+1. **Back up your database.** This release runs 15 new migrations: `auth` 1.0.2, `base` 1.0.8, `blog` 1.0.1, `catalog` 1.0.16 and 1.0.17, `checkout` 1.0.13, 1.0.14 and 1.0.15, `cms` 1.5.1, `customer` 1.0.6 and 1.0.7, `import` 1.0.0, `oms` 1.0.11, `promotion` 1.1.1 and `stripe` 1.0.1. Most add or replace triggers. `oms` 1.0.11 adds `order.placed_at` and fills it for orders already placed; `import` 1.0.0 and `stripe` 1.0.1 add new tables. They apply automatically on first start. Orders placed by v2.3.0 code after the migration (for example during a rolling deploy) keep `placed_at` empty.
+2. Update `@evershop/evershop`, reinstall dependencies, run `npm run build`. **Use Node.js 20.11 or newer.** `evershop build` fails on Node.js 20.9 and 20.10, which earlier notes allowed (v2.2.2 and v2.3.0 have the same limit).
+3. **Stripe**: unpaid Stripe orders are now cancelled and restocked after 1 hour. Change the delay with `system.stripe.abandonedOrderTtlHours`, or turn the job off with `system.stripe.reconcileEnabled: false`.
+4. **Cart recovery links**: set `CART_RECOVERY_TOKEN_SECRET` (a long random string) to use them. Without it, `buildCartRecoveryUrl` returns `null` and nothing else changes. Changing it cancels every link already sent.
+5. **GA4 and a cookie banner**: upgraded stores start with Cookie consent **Not required**. If you use GA4 and a cookie banner, choose **Required** in Store Setting → Analytics; otherwise GA4 sets its cookies before the shopper accepts. Load the banner from `themeConfig.headTags` without `async`, or from a `head` component with a `sortOrder` below 50.
+6. **CSV import** runs in a worker started from the event process. A deployment that does not run the event process cannot import.
+7. **Payment extensions**: call `markOrderPlaced` instead of emitting `order_placed`, and call `cancelAbandonedOrder` once the gateway says the money will never come, so the cart comes back.
+8. **Themes**: a theme that overrides `Footer` should render `PoweredByEverShop` if it wants the credit; rules that hide `.card-icons` now have nothing to hide.
+
+# v2.3.0 (2026-10-08)
+
+A feature release on top of v2.2.2: outbound webhooks, a country-aware address system, a unified payment capture/void/refund flow with a rebuilt PayPal integration, redesigned transactional emails, a media library, and storefront building blocks for theme authors. It includes everything in v2.2.2 (a start-up fix and several security fixes).
+
+This release contains **breaking changes** and **6 new database migrations**, one of which renames address columns. Please read **Breaking Changes** and **Upgrade Notes** before upgrading. If you upgrade from v2.2.1 or earlier, also read the Upgrade Notes of v2.2.2 below.
+
+## Highlights
+
+* **Webhooks** — a new `webhook` module: send signed events to up to 10 HTTPS endpoints, with retries and a delivery log.
+* **Address Format Registry** — country-aware address forms, validation, storage and display, driven by one format record per country.
+* **Unified payments** — one capture / void / refund flow for every payment method, and a rebuilt PayPal integration (webhook, refunds, reconciliation).
+* **Emails** — a shared email layout, plus new refund and cancellation emails, in 17 languages.
+* **Media library** — a paginated, redesigned file browser with rename and paste-to-upload.
+* **Theme building blocks** — `layouts.json`, storefront pages split into movable blocks, shared widget typography hooks, theme assets and seed content.
+
+## Breaking Changes
+
+Four changes that also affect you when upgrading from v2.2.1 shipped in v2.2.2 and are described there: raw SQL needs `sql()`, `getContextValue(...)` takes data literals only, `Query.order(uuid)` needs proven access, and API route middleware is authenticated.
+
+* **Address columns were renamed (Address Format Registry).** On `customer_address`, `cart_address` and `order_address`: `full_name` → `recipient`, `address_1` → `address_line_1`, `address_2` → `address_line_2`, `city` → `locality`, `province` → `administrative_area`, `postcode` → `postal_code`; seven nullable columns were added (`organization`, `address_line_3`, `dependent_locality`, `sorting_code`, `given_name`, `family_name`, `extra`). `tax_rate.province` / `postcode` became `administrative_area` / `postal_code`, and `shipping_zone_province` became `shipping_zone_region`. The migrations rename only (no row is rewritten), but **v2.2.1 and v2.2.2 code do not work with the new schema**: they still start, but every address reads back empty. The GraphQL `Address` types and the address REST payloads changed with them, and the `types/customerAddress` and `lib/locale/countries` modules were removed (use `@evershop/evershop/lib/address`: `getCountries`, `getCountryName`, `isKnownCountry` and the address types). Custom SQL, extensions and themes that read the old names must be updated. A script that reverses the address renames only is in the repository at `scripts/address-formats/rollback-schema.sql`.
+* **Payment capture and refund routes were replaced by one contract.** Removed: `POST /api/stripe/paymentIntents/capture`, `POST /api/stripe/paymentIntents/refund`, `POST /api/cod/captures`, `POST /api/paypal/authorizations/capture`, `POST /api/paypal/authorizedTransactions`, `POST /api/paypal/captureTransactions` and the PayPal refund route, together with the per-method admin buttons. Use `POST /api/orders/:id/capture` and `POST /api/orders/:id/refunds` (admin only); the order page shows generic Capture and Refund buttons. Payment methods now declare optional `capture`, `void` and `refund` handlers in `registerPaymentMethod`. Cash on Delivery orders get their own `cod_*` statuses, and a migration moves existing awaiting-payment COD orders from `pending` to `cod_pending` and records an offline `authorize` transaction for them. The order status no longer changes.
+* **PayPal return page renamed**: `/paypal/proccessing` is now `/paypal/processing` (no alias).
+* **Storefront pages are now a shell plus blocks.** The product, category, cart, checkout, account, order list, blog and search pages keep only the query, the provider and the Areas; every piece is its own page component that registers into a slot at its old position, so the default markup is unchanged. A theme that **forked** `ProductView.tsx`, `CategoryView.tsx`, `ProductSingleForm.tsx`, `ShoppingCart.tsx`, `Checkout.tsx`, `MyAccount.tsx`, `OrderList.tsx`, a blog page shell or `SearchPage.tsx` must delete the inline pieces from its copy, or the page renders them twice.
+* **Public `?limit=` is capped** at `system.max_collection_size` (default 200, the largest admin grid option).
+* **Fresh installs no longer create sample data.** The install migration no longer creates the Men / Women / Kids categories or the Color and Size attributes with their options. Existing stores keep what they have. Themes supply their own catalogue through `themes/<id>/seed/*.json`, read only by `evershop seed`.
+* **`sanitize-html` was replaced by `xss`** for rich text. The allow-list is the same; serialization differs cosmetically (`<br>` instead of `<br />`), and `style` values containing `url(javascript:)` or `expression()` are now dropped. Code that imported `sanitize-html` through EverShop must declare it itself.
+* **Prices and dates follow the active locale** (the request locale, then the Store Setting language, then `shop.language`). Admin pages format in the admin language.
+
+## New Features
+
+### Webhooks (new `webhook` core module)
+
+* Admin → Settings → Webhooks: up to 10 webhooks, each with an HTTPS URL, a signing secret and a list of events (21 event topics, grouped in the form). Includes a test event, a delivery list with filters, a payload viewer and Retry.
+* Delivery is write-first: a `webhook_delivery` row is stored, sent, and retried from that row (after 1, 5, 30 and 120 minutes, 5 attempts). The row is both the retry queue and the admin log. Delivery is at-least-once; a 2xx response within 10 seconds counts as success. Failed deliveries are kept 30 days; completed ones up to `webhookLogLimit` (default 100) per webhook.
+* Each request is signed: `X-EverShop-Signature: t=<unix>,v1=<HMAC-SHA256>` over `<timestamp>.<body>`; `X-EverShop-Delivery` stays the same across retries. `password` is removed from payloads at any depth.
+* Only HTTPS and public addresses are allowed, checked at connect time. Set `system.webhook.allowPrivateNetworks` to allow local receivers.
+* Extensions can add topics with `addProcessor('webhookTopics')`. Translated into all 17 languages.
+* Event subscribers placed in `subscribers/_all/` now receive every event, and every subscriber gets `{ name, uuid }` as an optional second argument. Delivery of ordinary subscribers is unchanged (at-most-once).
+
+### Address Format Registry
+
+* One country format record (Google libaddressinput shape) now drives the storefront form, server validation, display, GraphQL, emails and every integration mapping. The checkout and the account address book use one schema-driven form with country-specific fields, region lists, telephone and postal patterns.
+* Admin: Settings → Customer (name format, telephone, company, address lines, required fields, default country) and **Sell to countries** on Settings → Shipping, with a confirmation that lists shipping zones that would be left without a country.
+* Shipment emails now print the delivery address.
+* Public API for extensions: `@evershop/evershop/lib/address` (`patchAddressFormat`, `registerRegionProvider`, `registerAddressField`, `resolveAddressSchema`, `validateAddress`, `formatAddress`, `toIntegrationAddress`). Registration is locked after bootstrap, like the other registries.
+* The package now ships a `NOTICE` file for the bundled address data (derived from Google's libaddressinput).
+
+### Payments
+
+* **Unified operations.** Capture, void and refund are owned by core (`captureOrder`, `refundOrder`) and work the same for every payment method. The order page buttons appear from `canCapture` / `canRefund`. New `order_refunded` and `order_canceled` events.
+* **PayPal** was rebuilt: payment is finalized in-process on the return page (the old HTTP call to the store's own URL failed behind a bot challenge or proxy), a verified webhook at `POST /api/paypal/webhook` (set the webhook ID in the PayPal settings or in `system.paypal.webhookId`), admin refunds with partial-refund tracking, `paypal_pending` for pending captures, idempotent transaction recording, current Orders v2 payloads with exact-amount breakdowns (including zero-decimal currencies), and a reconciliation cron (every 30 minutes, `system.paypal.abandonedOrderTtlHours`, default 6) that captures approved orders and cancels and restocks abandoned ones. When a buyer cancels at PayPal, the abandoned order is now cancelled and restocked before the cart is reactivated.
+* **Stripe**: the charge amount and currency come from the order instead of the browser, the webhook verifies them, locks the order row and handles `payment_intent.payment_failed` and `charge.refunded`.
+* **Cash on Delivery** is wired into the same contract with its own `cod_*` statuses.
+* Order status changes are clamped instead of throwing on terminal or reverted states; shipments can be cancelled on refunded orders and cannot be created on terminal ones.
+
+### Transactional emails
+
+* A shared layout (header and logo, content, footer; button, divider and items-table partials; a `{{t}}` translation helper) now renders the order confirmation, welcome, reset password, shipment created and shipment delivered emails.
+* **New emails**: refund and cancellation, each switchable with `notification_emails.order_refunded` / `order_canceled` (`enabled`, `templatePath`).
+* The email copy is translated into all 17 languages (machine-assisted; less common languages deserve a native-speaker review).
+
+### Media library and file browser
+
+* The file browser is paginated for every storage provider (local, S3, Azure Blob, Google Cloud Storage) with cursors, so a folder with thousands of files no longer loads at once. Folders always load completely; listings now include size and type.
+* **Rename** files (extension is preserved, an existing name is never overwritten), **paste-to-upload**, a details panel with the full URL, size and dimensions, loading skeletons, and a working scrollbar. A **Media library** entry joins the CMS menu.
+* The configured upload types (System Setting → File Uploads: PDF, video, audio) are honoured by the browser; before, only images worked.
+
+### Storefront and catalog
+
+* **All products page** at `/products`, editable in the page builder, with sorting, filters, pagination, a category tree facet and an attribute facet. Included in the sitemap and offered in the link picker. The category filter now matches the whole subtree.
+* **Virtual collections** ("newest", "on sale", a category's products) for widgets and the page builder, so a new store's shelves are not empty.
+* Product cards decide **Add to Cart** themselves: simple products get the button ("Sold out" when out of stock), products with variants get **Select options**, a link to the product page. The featured items, recommendation, collection spotlight and rich-text product widgets gain the button.
+* **Contact form widget** with stored submissions: submissions are saved before the email is attempted, with an admin grid (unread / read / spam) and delete. The email outcome is recorded.
+* Admin → landing pages: **Replace homepage** with a landing page, with an automatic disabled backup and a one-click restore.
+* New `featured blogs` fallback (newest posts when none are picked), a slideshow placeholder in the page builder, and the page builder shows a loading skeleton while a replaced image renders.
+
+### Theme development
+
+* `themes/<id>/layouts.json` moves any storefront page component to another Area or sort order without forking the file. Hot reload in development; admin pages are never affected.
+* Theme `theme.json` can now ship **landing pages**, upload **assets** through the store's configured storage provider (`theme-asset:<path>` tokens) and reference products or collections by a stable key (`store-ref:<entity>/<by>/<key>`).
+* Shared widget classes `evershop-widget__eyebrow`, `__heading`, `__subtext` and `__item-heading` let one rule restyle every widget; vertical spacing is consistent. The Section widget follows the page column through `--page-max-width` and `--page-gutter` and exposes `data-padding`.
+* `evershop seed` is re-runnable and theme-aware: widgets (`--widgets`), variant groups, category images and a theme's retired categories are handled idempotently, size can drive a variant like colour, and seeded images go through the configured storage provider. The footer copyright is now live (`© <year> <store name>`) when none is set.
+
+## Security
+
+The fixes released in v2.2.2 are listed under that version. This release also fixes:
+
+* A PayPal capture action that could be called without authentication using only an order UUID; the public PayPal capture and authorize routes were removed.
+* The Stripe charge amount is now derived from the order, not from client data.
+* `?limit=` on public pages could request the whole catalog in one response (denial of service).
+
+## Performance
+
+* The product listing COUNT query drops joins it does not need (about 50.7 ms → 26.5 ms on a 300,000-product catalog) and the category facet matches a subtree with one array parameter instead of a recursive subquery (about 79 ms → 2.5 ms). The store-wide attribute facet uses an EXISTS probe (about 48 ms → 2 ms on 1.2 million index rows).
+* Rich text sanitizing no longer bundles `sanitize-html` into the storefront: about 200 KB less minified (67 KB gzipped).
+* Image and static-asset requests no longer create a session or send a `Set-Cookie`, so CDNs can cache product images.
+
+## Bug Fixes
+
+* The order confirmation email no longer prefixes the base URL onto absolute (S3 and other remote) thumbnail URLs.
+* `og:image` URLs are correct for cloud storage.
+* Requests no longer hang when `NODE_ENV` is neither `development` nor `production`, and local extensions no longer vanish in that case.
+* A widget with settings its GraphQL type does not accept no longer takes the whole page down with a 500: unknown keys are dropped with a warning, an unusable widget is left out of the page, and saving such settings is refused.
+* Sorting on the product listing resets the page, and the direction toggle works on the default sort.
+* Display locale for prices and dates comes from the active locale, not only `shop.language`.
+* Page components are imported in Area `sortOrder`, so the CSS cascade follows it (headings no longer lose their Tailwind base styles on the cart and checkout pages).
+* Menu items are keyed by their stored id (no duplicate React keys); the mobile menu stays inside the viewport; the header renders its Areas in source order (correct keyboard tab order).
+* Product images default to `object-fit: cover`, so photos are cropped rather than stretched.
+* Banner and slideshow buttons and headlines are legible over photographs; the split feature's vertical alignment works; call-to-action buttons share one height; either slideshow arrows field can hide the controls.
+* The Section widget lines up with the page column and no longer causes sideways scrolling on Windows and Linux.
+* The gallery slider and the variant selector work with other bundlers and with relative product URLs.
+* The file browser opens above the page builder, and its clicks no longer close the settings drawer.
+* `evershop build` no longer logs a database connection error (no database exists at build time).
+* Seeding no longer dies on the second page, re-uploads category images, or creates a category a theme meant to retire.
+
+## Developer Experience
+
+* New `npm run compile:dev` compiles in place without deleting `dist/`, so a running dev server keeps working. `compile:tsc` now copies the same non-source files as `compile`.
+* Jest maps `@components/*` to the compiled components and stubs stylesheet imports, so page components can be unit tested.
+* New regression tests guard failures that compile and pass CI: a comment inside `export const layout`, a Node built-in reachable from a React component, and an API route that reads `request.body` without body parsing.
+* `@evershop/postgres-query-builder` 2.1.0 adds `SelectQuery.getJoins()` and `pruneUnreferencedLeftJoins()`.
+
+## Dependencies
+
+* Added: `xss`; `jsdom` (dev, for DOM component tests).
+* Removed: `sanitize-html` and `@types/sanitize-html`.
+* The `multer`, `sharp`, `axios`, `undici` and `@evershop/postgres-query-builder` upgrades, and the removal of `cypress`, shipped in v2.2.2.
+
+## Upgrade Notes
+
+1. **Back up your database.** This release runs 6 new migrations: `checkout` 1.0.12, `customer` 1.0.5 and `tax` 1.0.1 (address columns, renames only), `cod` 1.0.0 (moves awaiting-payment COD orders to `cod_pending`), `cms` 1.5.0 (`contact_submission`) and `webhook` 1.0.0. They apply automatically on first start. **After they run, do not start v2.2.1 or v2.2.2 against the database: it starts, but every address reads back empty.** To go back, restore your backup. As an alternative, run `scripts/address-formats/rollback-schema.sql` (`psql --single-transaction -f`) while you redeploy the old release: it reverses the address renames and steps the `checkout`, `customer` and `tax` migration records back, but it does not undo the `cod` status change (orders that were awaiting payment stay `cod_pending`) or remove the new tables.
+2. Update `@evershop/evershop`, reinstall dependencies, run `npm run build`. Use Node.js 20.9 or newer (required since v2.2.2).
+3. **Stripe**: enable `payment_intent.succeeded`, `payment_intent.amount_capturable_updated`, `payment_intent.payment_failed`, `payment_intent.canceled` and `charge.refunded` on your webhook endpoint.
+4. **PayPal**: create a webhook in the PayPal dashboard pointing at `/api/paypal/webhook` and save its ID in the PayPal settings. Until then the endpoint answers 503 and the reconciliation cron is the only fallback. The old `paypalWebhookSecret` setting is gone.
+5. Review your shipping zones under Settings → Shipping. Provinces became regions, and **Sell to countries** limits which countries checkout accepts.
+6. If you use custom SQL, extensions or a theme: update address column names and the removed `types/customerAddress` and `lib/locale/countries` imports; replace calls to the removed payment routes with `POST /api/orders/:id/capture` and `/refunds`; delete the inline pieces from forked page shells (see Breaking Changes).
+7. Themes that depended on `order-first` to place the header's center Area: Areas now render left, center, right in the markup. Check your header.
+8. Rich text is sanitized by `xss`; check content that relied on `<br />` output or on `sanitize-html` being installed.
+
+# v2.2.2 (2026-10-08)
+
+A patch for v2.2.1 that fixes a start-up failure on fresh installs and several security vulnerabilities. There are no database migrations and no new features. Upgrading promptly is recommended.
+
+**Fresh installs of v2.2.1 fail to start.** The upload storage imported `concat-stream`, which was never declared and only arrived through `multer` 2.3.0 or older. `multer` 2.4.0 dropped it, and the `^2.2.0` range now resolves to 2.4.0, so the admin GraphQL schema fails to load at bootstrap. Stores that already have a lockfile with the older `multer` were not affected. On v2.2.1, `npm install concat-stream` is a workaround.
+
+## Security
+
+* **Order data exposure through the public GraphQL API** (CVE-2025-12919, CWE-639, #881): `Query.order(uuid)` returned name, email, phone, addresses, items and shipment tracking to anyone who knew an order UUID.
+* **Authorization bypass** (CWE-306 / CWE-863): an API route middleware that declared its own `after` list (for example `[bodyParser]saveGroup.js`) could run before authentication.
+* **SQL injection** (CWE-89) through the query builder's raw-SQL escape hatch: a request body passed as a `.where()` value could set `{ isSQL: true }` to inline unbound SQL. Fixed in `@evershop/postgres-query-builder` 2.1.1.
+* **Server-side code evaluation** (CWE-95): the GraphQL query builder evaluated the decoded arguments of `getContextValue(...)` tokens as JavaScript.
+* **Dependencies**: 53 of the 55 open high and critical alerts, including a `multer` denial of service and `sharp` / libvips / libheif fixes.
+
+## Bug Fixes
+
+* Fixed the fresh-install start-up failure described above. The upload storage now joins the chunks with `Buffer.concat`, as `multer`'s own memory storage does, and still enforces the per-type size limit while the file streams.
+
+## Dependencies
+
+* Upgraded: `multer` ^2.4.0, `sharp` 0.33 → 0.35 (**requires Node.js 20.9 or newer**), `axios` ^1.20.0, `undici` ^7.30.0, `@evershop/postgres-query-builder` ^2.1.1.
+* Removed: `cypress` (dev; the end-to-end tests use Playwright).
+
+## Upgrade Notes
+
+1. Update `@evershop/evershop`, reinstall dependencies and run `npm run build`. Use Node.js 20.9 or newer.
+2. **Raw SQL in the query builder needs `sql()`.** A hand-written `{ isSQL: true, value: '...' }` object is now treated as an ordinary bound value. Replace such objects in extensions with `sql('...')`.
+3. **`getContextValue(...)` in a route's GraphQL `query` or `variables` takes data literals only** (strings, numbers, booleans, `null`, arrays and objects). An expression now throws instead of running.
+4. **`Query.order(uuid)` returns `null` unless access is proven.** An order is returned only to an admin, to the customer who owns it, or to a page that called `grantOrderAccess(request, uuid, via)` (exported from `@evershop/evershop/oms/services`). Core's checkout success page and the order tracking page already do. A custom page, theme or extension that reads `order(uuid)` on its own must call it after checking access.
+5. **Authentication is now enforced on API route middleware that declares its own `after` list.** If a route middleware is ordered ahead of a pre-auth one, you now get an explicit error message instead of an opaque cycle error.
+
 # v2.2.1 (2026-08-11)
 
 The largest EverShop release since 2.0. It consolidates the previously drafted-but-unpublished 2.1.3 work (React 19) with four months of development on top of v2.1.2: a visual page builder, a blog module, entity custom fields (metafields), a multi-language storefront with a translated admin, a rebuilt shipping and fulfillment stack, built-in cloud file storage, product recommendations, and a substantial security and performance pass.

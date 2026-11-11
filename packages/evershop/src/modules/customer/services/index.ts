@@ -10,6 +10,15 @@ export * from './customer/updateCustomer.js';
 export { default as deleteCustomer } from './customer/deleteCustomer.js';
 export * from './customer/deleteCustomer.js';
 
+// Signing in without a password (social login): find the account by email in
+// any letter case, then `request.loginCustomer(id)` for a session or
+// `issueCustomerTokens(id)` for a headless storefront
+export { getCustomerByEmail } from './customer/getCustomerByEmail.js';
+export {
+  issueCustomerTokens,
+  type CustomerTokens
+} from './customer/issueCustomerTokens.js';
+
 // customer metafields
 export * from './customer/customerMetafield.js';
 
@@ -29,8 +38,17 @@ export * from './customer/address/updateCustomerAddress.js';
 export { default as deleteCustomerAddress } from './customer/address/deleteCustomerAddress.js';
 export * from './customer/address/deleteCustomerAddress.js';
 
-// address validators
-export * from './customer/address/addressValidators.js';
+// Address validation lives in the Address Format Registry (`lib/address`);
+// the rules derive from the country's schema, there is no hand-written list.
+export {
+  validateAddress,
+  addAddressValidationRule
+} from '../../../lib/address/validate.js';
+export {
+  AddressValidationError,
+  isAddressValidationError
+} from './customer/address/AddressValidationError.js';
+export { foldAddressExtras } from './customer/address/foldAddressExtras.js';
 
 // utilities
 export * from './getCustomersBaseQuery.js';
