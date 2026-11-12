@@ -1,7 +1,7 @@
 import { node, select } from '@evershop/postgres-query-builder';
 import { pool } from '../../../../../lib/postgres/connection.js';
 import { get } from '../../../../../lib/util/get.js';
-import { getBaseUrl } from '../../../../../lib/util/getBaseUrl.js';
+import { getImageUrl } from '../../../../../lib/util/getImageUrl.js';
 import { setPageMetaInfo } from '../../../../cms/services/pageMetaInfo.js';
 import { setContextValue } from '../../../../graphql/services/contextHelper.js';
 import { getShowOutOfStockProducts } from '../../../services/catalogSettings.js';
@@ -157,10 +157,17 @@ export default async (request, response, next) => {
         .and('is_main', '=', true)
         .load(pool);
       if (productImage) {
-        const baseUrl = getBaseUrl();
+        // `origin_image` (a relative path for local storage, a full URL for
+        // cloud storage) goes as it is to the `/images` endpoint; only the
+        // endpoint URL is absolute, as social crawlers require.
         setPageMetaInfo(request, {
           ogInfo: {
-            image: `${baseUrl}/images?src=${baseUrl}${productImage.origin_image}&w=1200&q=80&h=675&f=png`
+            image: getImageUrl(productImage.origin_image, {
+              width: 1200,
+              quality: 80,
+              height: 675,
+              format: 'png'
+            })
           }
         });
       }
