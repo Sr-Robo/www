@@ -154,8 +154,10 @@ found" — this repo owns the logic side of the split, not the look.
 ## Doing work in this repo
 
 - The published package is built from `src/` to `dist/` via SWC (`npm run compile`). Runtime loads `.js` from `dist/`. When editing, edit `.ts` in `src/`.
+- **While `npm run dev` is running, compile with `npm run compile:dev`, never `npm run compile`.** The latter starts with `rimraf ./packages/evershop/dist`, which replaces the directory the dev server is watching. The watcher keeps a handle on the deleted inode and rebuilds forever — identical bundle hash, every few hundred milliseconds — and only restarting the server clears it. `compile:dev` writes in place and leaves the inode untouched. Use the full `compile` when a source file has been DELETED (only the rimraf clears its stale output), and expect to restart the dev server afterwards.
 - Tests run with Jest: `npm test` from the repo root.
 - Lint with `npm run lint`.
 - Dev server: `npm run dev` (uses `webpack-dev-middleware` + HMR).
 - Build for production: `npm run build` then `npm run start`.
 - Never bypass `husky` hooks (`--no-verify`) or skip type/lint failures without an explicit go-ahead.
+- **Themes, the theme lab and the asset library are not in this repo.** They moved to `../extensionsFactory` (copied 2026-10-09, removed here 2026-10-12); this repo is for core maintenance only. Before releasing a change to a storefront component, widget, shared class hook (`evershop-widget__heading`, `__item-heading`, …), markup or CSS, follow `../extensionsFactory/.claude/skills/core-change-check/SKILL.md`: compile this checkout with `npm run compile:dev`, render it in the lab through `EVERSHOP_PKG`, and compare every theme with its approved baseline. Source comments that cite "theme-lab FINDINGS #n" point at `../extensionsFactory/theme-lab/FINDINGS.md`; a core defect found by theme work is fixed here. See [wiki/theme-lab.md](wiki/theme-lab.md).
