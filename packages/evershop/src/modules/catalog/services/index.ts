@@ -6,6 +6,11 @@ export * from './product/updateProduct.js';
 export { default as deleteProduct } from './product/deleteProduct.js';
 export * from './product/deleteProduct.js';
 export * from './product/productMetafield.js';
+export {
+  getProductUrl,
+  getProductUrls,
+  type ProductUrlOptions
+} from './product/productUrl.js';
 
 // Categories
 export { default as createCategory } from './category/createCategory.js';
@@ -43,6 +48,13 @@ export {
 export { default as deleteAttribute } from './attribute/deleteProductAttribute.js';
 export * from './attribute/deleteProductAttribute.js';
 
+// Variant groups
+export { default as createVariantGroup } from './variant/createVariantGroup.js';
+export * from './variant/createVariantGroup.js';
+export { default as addVariantItem } from './variant/addVariantItem.js';
+export * from './variant/addVariantItem.js';
+export * from './variant/VariantGroupError.js';
+
 // Query helpers
 export * from './getCategoriesBaseQuery.js';
 export * from './getCollectionsBaseQuery.js';
@@ -52,3 +64,8 @@ export * from './getProductsByCollectionBaseQuery.js';
 
 // Catalog behaviour settings (admin setting → config → default)
 export * from './catalogSettings.js';
+
+// Virtual collections (no rows; answered by a query). Defined in lib/ so the
+// page-builder pickers can import it too — the webpack alias maps
+// `@evershop/evershop/*` straight at dist/, where only `lib/*` paths resolve.
+export * from '../../../lib/util/virtualCollection.js';
