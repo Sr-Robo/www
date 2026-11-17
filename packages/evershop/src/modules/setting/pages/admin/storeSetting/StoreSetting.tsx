@@ -10,8 +10,6 @@ import { ReactSelectField } from '@components/common/form/ReactSelectField.js';
 import { SelectField } from '@components/common/form/SelectField.js';
 import { TelField } from '@components/common/form/TelField.js';
 import { TextareaField } from '@components/common/form/TextareaField.js';
-import { ToggleField } from '@components/common/form/ToggleField.js';
-import { LANGUAGES } from '@components/common/locale/LanguageOption.js';
 import { Button } from '@components/common/ui/Button.js';
 import {
   Card,
@@ -24,6 +22,7 @@ import {
 import { Item } from '@components/common/ui/Item.js';
 import { Skeleton } from '@components/common/ui/Skeleton.js';
 import { toast } from '@components/common/ui/Sonner.js';
+import { LANGUAGES } from '@evershop/evershop/lib/locale/languages';
 import { _ } from '@evershop/evershop/lib/locale/translate/_';
 import React, { useEffect } from 'react';
 import { useQuery } from 'urql';
@@ -49,19 +48,28 @@ function ShopCustomFields({
   );
 }
 
-const ProvincesQuery = `
-  query Province($countries: [String]) {
-    provinces (countries: $countries) {
-      code
+const RegionsQuery = `
+  query StoreRegions($country: String!) {
+    regions(country: $country) {
+      key
       name
-      countryCode
+    }
+    addressConfigWarnings {
+      kind
+      source
+      key
+      keyName
+      mergedInto {
+        key
+        name
+      }
     }
   }
 `;
 
 const CountriesQuery = `
-  query Country($countries: [String]) {
-    countries (countries: $countries) {
+  query StoreCountries {
+    countries(scope: ALL) {
       code
       name
     }
@@ -84,30 +92,55 @@ const DIMENSION_UNITS = [
   { value: 'in', label: 'Inch (in)' }
 ];
 
-const Province: React.FC<{
+interface RegionOption {
+  key: string;
+  name: string;
+}
+
+interface RetiredWarning {
+  kind: string;
+  source: string;
+  key?: string | null;
+  keyName?: string | null;
+  mergedInto?: { key: string; name: string } | null;
+}
+
+/**
+ * The store's administrative area, from `regions(country)` (Address Format
+ * Registry). The stored key is kept even when a data refresh retired it: the
+ * option stays, marked "(retired)", with the successor named in the helper
+ * text (`addressConfigWarnings`, source `store_address`). Countries without
+ * enumerated regions render nothing and keep whatever is stored.
+ */
+const StoreRegion: React.FC<{
   selectedCountry: string;
-  selectedProvince: string;
-  allowedCountries?: string[];
+  selectedRegion: string;
   fieldName?: string;
-}> = ({
-  selectedCountry = 'US',
-  selectedProvince,
-  allowedCountries = [],
-  fieldName = 'storeProvince'
-}) => {
+}> = ({ selectedCountry = 'US', selectedRegion, fieldName = 'storeProvince' }) => {
   const { setValue } = useFormContext();
 
   const [result] = useQuery({
-    query: ProvincesQuery,
-    variables: { countries: allowedCountries }
+    query: RegionsQuery,
+    variables: { country: selectedCountry },
+    pause: !selectedCountry
   });
   const { data, fetching, error } = result;
+  const regions: RegionOption[] = data?.regions ?? [];
+  const retired: RetiredWarning | undefined = (
+    data?.addressConfigWarnings ?? []
+  ).find(
+    (w: RetiredWarning) =>
+      w.kind === 'RETIRED_REGION' &&
+      w.source === 'store_address' &&
+      w.key === selectedRegion
+  );
   useEffect(() => {
     if (fetching || !data) return;
-    const provinces = data.provinces.filter(
-      (p) => p.countryCode === selectedCountry
-    );
-    if (provinces.every((p) => p.code !== selectedProvince)) {
+    if (
+      regions.length > 0 &&
+      !retired &&
+      regions.every((r) => r.key !== selectedRegion)
+    ) {
       setValue(fieldName, '');
     }
   }, [selectedCountry, fetching]);
@@ -121,23 +154,34 @@ const Province: React.FC<{
   if (error) {
     return <p className="text-destructive">{error.message}</p>;
   }
-  const provinces = data.provinces.filter(
-    (p) => p.countryCode === selectedCountry
-  );
-  if (!provinces.length) {
+  if (!regions.length && !retired) {
     return null;
+  }
+  const options = regions.map((r) => ({ value: r.key, label: r.name }));
+  if (retired) {
+    options.unshift({
+      value: selectedRegion,
+      label: `${retired.keyName ?? selectedRegion} (${_('retired')})`
+    });
   }
 
   return (
     <div>
       <SelectField
         id="storeProvince"
-        defaultValue={selectedProvince}
+        defaultValue={selectedRegion}
         name={fieldName}
-        label={_('Province')}
-        placeholder={_('Province')}
+        label={_('Region')}
+        placeholder={_('Region')}
         required
-        options={provinces.map((p) => ({ value: p.code, label: p.name }))}
+        options={options}
+        helperText={
+          retired?.mergedInto
+            ? _('This region was retired; its successor is ${name}.', {
+                name: retired.mergedInto.name
+              })
+            : undefined
+        }
       />
     </div>
   );
@@ -146,21 +190,12 @@ const Province: React.FC<{
 const Country: React.FC<{
   selectedCountry: string;
   setSelectedCountry: (country: string) => void;
-  allowedCountries?: string[];
   fieldName?: string;
-}> = ({
-  selectedCountry,
-  setSelectedCountry,
-  allowedCountries = [],
-  fieldName = 'storeCountry'
-}) => {
+}> = ({ selectedCountry, setSelectedCountry, fieldName = 'storeCountry' }) => {
   const onChange = (value: string) => {
     setSelectedCountry(value);
   };
-  const [result] = useQuery({
-    query: CountriesQuery,
-    variables: { countries: allowedCountries }
-  });
+  const [result] = useQuery({ query: CountriesQuery });
 
   const { data, fetching, error } = result;
 
@@ -332,7 +367,7 @@ interface StoreSettingProps {
     favicon?: string;
     socialSharingImage?: string;
     gaMeasurementId?: string;
-    allowGuestCheckout?: boolean;
+    gaConsentDefault?: string;
   };
 }
 
@@ -365,7 +400,7 @@ export default function StoreSetting({
     favicon,
     socialSharingImage,
     gaMeasurementId,
-    allowGuestCheckout
+    gaConsentDefault
   }
 }: StoreSettingProps) {
   const [selectedCountry, setSelectedCountry] = React.useState(() => {
@@ -492,8 +527,8 @@ export default function StoreSetting({
                       placeholder={_('City')}
                     />
                   </div>
-                  <Province
-                    selectedProvince={storeProvince}
+                  <StoreRegion
+                    selectedRegion={storeProvince}
                     selectedCountry={selectedCountry}
                   />
                   <div>
@@ -632,16 +667,25 @@ export default function StoreSetting({
                     }}
                   />
                 </div>
-              </CardContent>
-              <CardContent className="pt-3 border-t border-border">
-                <CardTitle>{_('Checkout')}</CardTitle>
-                <div className="mt-4">
-                  <ToggleField
-                    name="allowGuestCheckout"
-                    label={_('Allow guest checkout')}
-                    defaultValue={allowGuestCheckout ?? true}
-                    helperText={_(
-                      'When enabled, shoppers can place an order without an account. When disabled, they must log in or register to check out.'
+                <div className="mt-5">
+                  <SelectField
+                    name="gaConsentDefault"
+                    label={_('Cookie consent')}
+                    defaultValue={gaConsentDefault || 'granted'}
+                    options={[
+                      {
+                        value: 'granted',
+                        label: _('Not required: collect from the first page')
+                      },
+                      {
+                        value: 'denied',
+                        label: _(
+                          'Required: no cookies until the shopper accepts'
+                        )
+                      }
+                    ]}
+                    description={_(
+                      'With "Required", Google Analytics sets no cookies until your cookie banner tells Google that the shopper accepted. Until then, Google still receives page views and events without cookies, and your reports show few of them. Choose "Required" whenever your store has a cookie banner, and use a banner that supports Google Consent Mode, such as Cookiebot, OneTrust or CookieYes. With "Required" and no such banner, your reports stay almost empty.'
                     )}
                   />
                 </div>
@@ -714,7 +758,7 @@ export const query = `
       favicon
       socialSharingImage
       gaMeasurementId
-      allowGuestCheckout
+      gaConsentDefault
     }
   }
 `;
