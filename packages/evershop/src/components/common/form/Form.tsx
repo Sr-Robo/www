@@ -27,6 +27,12 @@ interface FormProps<T extends FieldValues = FieldValues>
   errorMessage?: string;
   submitBtn?: boolean;
   submitBtnText?: string;
+  /**
+   * Size of the submit button (the shared Button's sizes). A form that sits inside
+   * a widget passes `lg` so its button matches the 40px call-to-action buttons
+   * around it; admin forms keep the default.
+   */
+  submitBtnSize?: React.ComponentProps<typeof Button>['size'];
   loading?: boolean;
   children: React.ReactNode;
 }
@@ -43,6 +49,7 @@ export function Form<T extends FieldValues = FieldValues>({
   errorMessage = _('Something went wrong! Please try again.'),
   submitBtn = true,
   submitBtnText = _('Save'),
+  submitBtnSize,
   loading = false,
   children,
   className,
@@ -150,6 +157,16 @@ export function Form<T extends FieldValues = FieldValues>({
           event.stopPropagation();
           handleSubmit(handleFormSubmit, onValidationError)(event);
         }}
+        // Before hydration (a click while the page script is still loading,
+        // or JavaScript off) the browser submits the form by itself. Without
+        // a method that is a GET, which puts every named field — the
+        // password on the login forms — in the URL: browser history, access
+        // logs, Referer. `method` above is only the fetch method (and a
+        // native form has no PATCH or DELETE). No native `action` either:
+        // the early submission posts to the page's own URL (a GET route, so
+        // the not-found page answers), never to the JSON endpoint behind
+        // `action`.
+        method="post"
         className={className}
         noValidate={noValidate}
         {...props}
@@ -165,6 +182,7 @@ export function Form<T extends FieldValues = FieldValues>({
               // extra onClick calling handleSubmit here would fire the pipeline
               // a second time — two validate+POST passes per click.
               type="submit"
+              size={submitBtnSize}
               isLoading={isSubmitting || loading}
             >
               {submitBtnText}
