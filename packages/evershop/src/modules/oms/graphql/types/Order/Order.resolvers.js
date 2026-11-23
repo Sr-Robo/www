@@ -1,22 +1,30 @@
 import { select } from '@evershop/postgres-query-builder';
-import { buildUrl } from '../../../../../lib/router/buildUrl.js';
 import { camelCase } from '../../../../../lib/util/camelCase.js';
 import { getConfig } from '../../../../../lib/util/getConfig.js';
+import { toGraphqlAddress } from '../../../../base/services/address/graphqlAddress.js';
+import { getProductUrl } from '../../../../catalog/services/product/productUrl.js';
 import { getCarrier } from '../../../services/carrier/registry.js';
 import { getOrdersBaseQuery } from '../../../services/getOrdersBaseQuery.js';
+import { canAccessOrder } from '../../../services/orderAccess.js';
 import { getPhaseOf } from '../../../services/updateShipmentStatus.js';
 
 export default {
   Query: {
-    order: async (_, { uuid }, { pool }) => {
+    /**
+     * An order is returned only to the caller who may see it: an admin, the
+     * customer who owns it, or a page that proved access and left a marker in
+     * the context (`grantOrderAccess`). Everyone else gets `null`, the same
+     * answer as for an unknown UUID, so the endpoint is not an oracle for which
+     * UUIDs exist.
+     */
+    order: async (_, { uuid }, context) => {
       const query = getOrdersBaseQuery();
       query.where('uuid', '=', uuid);
-      const order = await query.load(pool);
-      if (!order) {
+      const order = await query.load(context.pool);
+      if (!order || !canAccessOrder(context, order)) {
         return null;
-      } else {
-        return camelCase(order);
       }
+      return camelCase(order);
     },
     /**
      * Anonymous tracking token verification status, populated by the
@@ -57,14 +65,14 @@ export default {
         .from('order_address')
         .where('order_address_id', '=', shippingAddressId)
         .load(pool);
-      return address ? camelCase(address) : null;
+      return address ? toGraphqlAddress(address, 'OrderAddress') : null;
     },
     billingAddress: async ({ billingAddressId }, _, { pool }) => {
       const address = await select()
         .from('order_address')
         .where('order_address_id', '=', billingAddressId)
         .load(pool);
-      return address ? camelCase(address) : null;
+      return address ? toGraphqlAddress(address, 'OrderAddress') : null;
     },
     activities: async ({ orderId }, _, { pool }) => {
       const query = select().from('order_activity');
@@ -155,12 +163,15 @@ export default {
     }
   },
   OrderItem: {
+    // The product's page in the store, like a cart item's productUrl (it
+    // returned the admin edit page before, and the storefront schema shares
+    // this resolver). Null when the product was deleted.
     productUrl: async ({ productId }, _, { pool }) => {
       const product = await select()
         .from('product')
         .where('product_id', '=', productId)
         .load(pool);
-      return product ? buildUrl('productEdit', { id: product.uuid }) : null;
+      return product ? getProductUrl(product.uuid, {}, pool) : null;
     },
     /**
      * Per-item fulfillment rollup. Sums shipment_item.qty across non-canceled
