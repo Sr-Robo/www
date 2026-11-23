@@ -6,8 +6,7 @@
   <h1 align="center">EverShop</h1>
 </p>
 <h4 align="center">
-    <a href="https://evershop.io/docs/development/getting-started/introduction">Documentation</a> |
-    <a href="https://demo.evershop.io/">Demo</a>
+    <a href="https://evershop.io/docs/development/getting-started/introduction">Documentation</a>
 </h4>
 
 <p align="center">
@@ -53,6 +52,7 @@ Para o guia de instalação completo, consulte o [Guia de instalação](https://
 - [Desenvolvimento de temas](https://evershop.io/docs/development/theme/theme-overview).
 
 
+<<<<<<< HEAD
 ## Demonstração
 
 Explore a loja de demonstração.
@@ -72,6 +72,9 @@ Email: demo@evershop.io<br/>
 Password: 123456
 
 ## Contribuição
+=======
+## Support
+>>>>>>> upstream/main
 
 O EverShop é um projeto de código aberto. Temos o compromisso de ter um processo de desenvolvimento totalmente transparente e valorizamos muito todas as contribuições. Se você nos ajudar a corrigir bugs, propor novos recursos, melhorar a documentação ou divulgar o projeto, adoraríamos ter você como parte da comunidade EverShop.
 
